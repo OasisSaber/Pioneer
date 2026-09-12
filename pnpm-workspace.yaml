@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+nodeLinker: hoisted
+minimumReleaseAgeExclude:
+  - '@vitest/coverage-v8@5.0.0'
+  - '@vitest/mocker@5.0.0'
+  - '@vitest/spy@5.0.0'
+  - 'electron@44.2.0'
+  - 'vitest@5.0.0'

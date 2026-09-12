@@ -1,0 +1,40 @@
+{
+  "name": "pioneer",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build:desktop": "pnpm --filter @pioneer/desktop build",
+    "dev": "pnpm --filter @pioneer/desktop start",
+    "format:check": "prettier --check apps/desktop tests/contract tests/e2e tests/helpers package.json pnpm-workspace.yaml eslint.config.mjs vitest.config.ts",
+    "lint": "eslint apps/desktop/src tests/contract tests/e2e *.config.*",
+    "typecheck": "pnpm --filter @pioneer/desktop typecheck",
+    "package:smoke": "pnpm --filter @pioneer/desktop build",
+    "verify:repository": "node --test tests/repository/normalization.test.mjs",
+    "test:prototype": "node tests/prototype/verify-prototype.js && node tests/prototype/adversarial-probes.js && node tests/prototype/adversarial-stress-probe.js && node tests/prototype/link-details-probe.js",
+    "check:m15": "pnpm verify:repository && pnpm test:prototype",
+    "test:contract:types": "tsc --noEmit -p tsconfig.tests.json",
+    "test:contract": "pnpm test:contract:types && vitest run --config vitest.config.ts",
+    "test:e2e": "pnpm build:desktop && playwright test --config tests/e2e/playwright.config.ts",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test:contract && pnpm test:prototype && pnpm test:e2e && pnpm package:smoke"
+  },
+  "devDependencies": {
+    "@eslint/compat": "2.1.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "24.13.3",
+    "@typescript-eslint/eslint-plugin": "8.69.0",
+    "@typescript-eslint/parser": "8.69.0",
+    "@vitest/coverage-v8": "5.0.0",
+    "eslint": "10.9.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.12.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "vitest": "5.0.0"
+  }
+}

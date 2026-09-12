@@ -1,0 +1,11 @@
+archive/
+demos/
+design-specs/
+node_modules/
+out/
+.webpack/
+coverage/
+playwright-report/
+test-results/
+tests/e2e/test-output/
+tests/prototype/
