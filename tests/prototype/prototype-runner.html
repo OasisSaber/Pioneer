@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pioneer Prototype Test Runner · 自动化验收仪表盘</title>
+<style>
+/* ==========================================================================
+   Pioneer Apple HIG x Opencode Minimalist Design Tokens
+   ========================================================================== */
+:root {
+  --canvas: #FDFCFC;
+  --surface: #F5F5F7;
+  --surface-2: #F8F7F7;
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --ink-3: #86868B;
+  --line: #E0DEDE;
+  --line-strong: #4B4646;
+  --accent: #0071E3;
+  --accent-hover: #0066CC;
+  --dark: #161413;
+  --dark-surface: #1E1C1B;
+  --dark-line: #3A3635;
+  --on-dark: #FDFCFC;
+  --on-dark-2: #8A8585;
+  --green: #34C759;
+  --green-bg: rgba(52, 199, 89, 0.12);
+  --red: #FF3B30;
+  --red-bg: rgba(255, 59, 48, 0.12);
+  --yellow: #FF9500;
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "SF Mono", Menlo, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* Header */
+.runner-header {
+  height: 64px;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+  padding: 0 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-grid {
+  display: grid;
+  grid-template-columns: 10px 10px;
+  grid-template-rows: 10px 10px;
+  gap: 3px;
+}
+.logo-grid i { background: var(--ink); border-radius: 2px; }
+.logo-grid i.hi { background: var(--accent); }
+
+.brand-title {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.5px;
+}
+.brand-title span { color: var(--accent); }
+
+.meta-pill {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.meta-pill b { color: var(--ink); }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+  user-select: none;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hover); }
+.btn-secondary {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-secondary:hover { background: #ECECEE; }
+
+/* Main Container */
+.main-wrapper {
+  flex: 1;
+  max-width: 1720px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 24px 32px 64px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Hero HUD Metrics */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  position: relative;
+  overflow: hidden;
+}
+.metric-card::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 4px;
+  background: var(--line-strong);
+}
+.metric-card.pass::before { background: var(--green); }
+.metric-card.fail::before { background: var(--red); }
+.metric-card.active::before { background: var(--accent); }
+
+.metric-label {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.metric-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -1px;
+}
+.metric-sub {
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* Progress Track */
+.progress-container {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.progress-bar-track {
+  width: 100%;
+  height: 8px;
+  background: var(--surface);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--accent);
+  border-radius: 999px;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+.progress-bar-fill.done { background: var(--green); }
+.progress-bar-fill.has-err { background: var(--red); }
+
+/* Control & Filter Toolbar */
+.toolbar-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.segmented-control {
+  display: inline-flex;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg-btn {
+  background: transparent;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.seg-btn.active {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 6px 16px;
+  width: 320px;
+}
+.search-box input {
+  border: none;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink);
+  outline: none;
+  width: 100%;
+}
+
+/* Two-column Layout */
+.layout-split {
+  display: grid;
+  grid-template-columns: 1fr 480px;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Test Cases Panel */
+.cases-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tier-group {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.tier-header {
+  padding: 14px 20px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+.tier-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tier-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.tier-count-badge {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.test-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.test-item {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: background 0.1s ease;
+}
+.test-item:last-child { border-bottom: none; }
+.test-item:hover { background: #FAFAFB; }
+
+.test-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+.test-id-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.badge-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+.badge-feature {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(0, 113, 227, 0.08);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+.badge-req {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-2);
+  background: var(--surface);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.test-status-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.status-pending { background: var(--surface); color: var(--ink-3); }
+.status-pass { background: var(--green-bg); color: var(--green); border: 1px solid rgba(52,199,89,0.3); }
+.status-fail { background: var(--red-bg); color: var(--red); border: 1px solid rgba(255,59,48,0.3); }
+
+.test-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.4;
+}
+.test-desc {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.test-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.test-error-box {
+  background: #FFF5F5;
+  border: 1px solid #FFD1D1;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--red);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Sidebar: Target Live Sandbox & Terminal Logs */
+.side-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 88px;
+}
+
+/* Live Iframe Sandbox Card */
+.sandbox-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sandbox-header {
+  height: 42px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+.sandbox-actions {
+  display: flex;
+  gap: 8px;
+}
+.sandbox-btn {
+  background: transparent;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.iframe-container {
+  width: 100%;
+  height: 270px;
+  background: var(--dark);
+  position: relative;
+}
+.iframe-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #fff;
+}
+
+/* Opencode Dark Event Stream Terminal */
+.terminal-card {
+  background: var(--dark);
+  border: 1px solid var(--dark-line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  color: var(--on-dark);
+}
+.terminal-header {
+  height: 38px;
+  background: var(--dark-surface);
+  border-bottom: 1px solid var(--dark-line);
+  padding: 0 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.traffic-lights {
+  display: flex;
+  gap: 6px;
+}
+.traffic-lights i {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: #4B4646;
+}
+.traffic-lights i.r { background: #FF5F56; }
+.traffic-lights i.y { background: #FFBD2E; }
+.traffic-lights i.g { background: #27C93F; }
+
+.terminal-body {
+  height: 300px;
+  overflow-y: auto;
+  padding: 12px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.term-line {
+  display: flex;
+  gap: 8px;
+}
+.term-line .ts { color: var(--on-dark-2); }
+.term-line .prompt { color: var(--accent); font-weight: 700; }
+.term-line.info { color: #fff; }
+.term-line.pass { color: var(--green); }
+.term-line.fail { color: var(--red); }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="runner-header">
+  <div class="brand-group">
+    <div class="logo-grid">
+      <i class="hi"></i><i></i>
+      <i></i><i class="hi"></i>
+    </div>
+    <div class="brand-title">PIONEER <span>PROTOTYPE RUNNER</span></div>
+    <div class="meta-pill">
+      <span>●</span> <b>210 TESTS</b> &nbsp;|&nbsp; 100% OFFLINE file:///
+    </div>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-secondary" id="btnRerun" onclick="runAllTests()">🔄 重新执行</button>
+    <button class="btn btn-primary" id="btnRunAll" onclick="runAllTests()">▶️ 一键运行全部</button>
+  </div>
+</header>
+
+<!-- Main Canvas -->
+<div class="main-wrapper">
+
+  <!-- HUD Metrics -->
+  <section class="metrics-grid">
+    <div class="metric-card active">
+      <div class="metric-label">TOTAL TESTS</div>
+      <div class="metric-value" id="hudTotal">210</div>
+      <div class="metric-sub">4 Tiers · 18 Features</div>
+    </div>
+    <div class="metric-card pass">
+      <div class="metric-label">PASSED</div>
+      <div class="metric-value" id="hudPassed" style="color: var(--green)">0</div>
+      <div class="metric-sub">Quality Gate Satisfied</div>
+    </div>
+    <div class="metric-card fail">
+      <div class="metric-label">FAILED</div>
+      <div class="metric-value" id="hudFailed" style="color: var(--red)">0</div>
+      <div class="metric-sub">Zero Defect Baseline</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">DURATION</div>
+      <div class="metric-value" id="hudDuration">0ms</div>
+      <div class="metric-sub">Sub-second Execution</div>
+    </div>
+    <div class="metric-card pass">
+      <div class="metric-label">PASS RATE</div>
+      <div class="metric-value" id="hudPassRate">0%</div>
+      <div class="metric-sub">Target: 100.0%</div>
+    </div>
+  </section>
+
+  <!-- Progress Bar -->
+  <section class="progress-container">
+    <div class="progress-header">
+      <span id="progressStatusText">等待执行就绪 (Ready)</span>
+      <span id="progressPercent">0%</span>
+    </div>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+  </section>
+
+  <!-- Toolbar Filters -->
+  <section class="toolbar-card">
+    <div class="segmented-control" id="tierFilters">
+      <button class="seg-btn active" onclick="setFilter('all', this)">全部 (210)</button>
+      <button class="seg-btn" onclick="setFilter(1, this)">Tier 1: 核心特征 (90)</button>
+      <button class="seg-btn" onclick="setFilter(2, this)">Tier 2: 边界病理 (90)</button>
+      <button class="seg-btn" onclick="setFilter(3, this)">Tier 3: 联动成对 (20)</button>
+      <button class="seg-btn" onclick="setFilter(4, this)">Tier 4: 场景工作流 (10)</button>
+    </div>
+    <div class="search-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="searchInput" placeholder="搜索用例 ID / 特征 / 标题..." oninput="handleSearch()">
+    </div>
+  </section>
+
+  <!-- Split View -->
+  <div class="layout-split">
+    
+    <!-- Test Cases Column -->
+    <main class="cases-pane" id="casesContainer">
+      <!-- Injected by JavaScript -->
+    </main>
+
+    <!-- Sidebar Sandbox & Terminal Column -->
+    <aside class="side-pane">
+      
+      <!-- Sandbox Live Target Iframe -->
+      <div class="sandbox-card">
+        <div class="sandbox-header">
+          <span>🎯 被测目标预览沙箱</span>
+          <div class="sandbox-actions">
+            <button class="sandbox-btn" onclick="reloadSandbox()">重新载入</button>
+            <a class="sandbox-btn" id="sandboxLink" href="../../demos/00-pioneer-workbench.html" target="_blank">独立全屏 ↗</a>
+          </div>
+        </div>
+        <div class="iframe-container">
+          <iframe id="targetIframe" src="../../demos/00-pioneer-workbench.html"></iframe>
+        </div>
+      </div>
+
+      <!-- Opencode Event Stream Terminal -->
+      <div class="terminal-card">
+        <div class="terminal-header">
+          <div class="traffic-lights">
+            <i class="r"></i><i class="y"></i><i class="g"></i>
+          </div>
+          <span>OPENCODE EVENT STREAM</span>
+          <span style="color: var(--on-dark-2); font-size: 11px;">v1.0-stream</span>
+        </div>
+        <div class="terminal-body" id="termBody">
+          <div class="term-line info">
+            <span class="ts">[00:00:00]</span>
+            <span class="prompt">$</span>
+            <span>pioneer prototype test engine ready. click [一键运行全部] to start.</span>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+  </div>
+
+</div>
+
+<!-- Test Suite Payload -->
+<script src="test-cases.js"></script>
+
+<script>
+// State
+let activeTierFilter = 'all';
+let searchQuery = '';
+let testResultsMap = {};
+
+const suite = window.PIONEER_TEST_SUITE;
+
+// Init render
+document.addEventListener('DOMContentLoaded', () => {
+  if (!suite) {
+    logTerm('fail', 'Error: PIONEER_TEST_SUITE failed to load from test-cases.js');
+    return;
+  }
+  document.getElementById('hudTotal').textContent = suite.totalTests;
+  renderTestList();
+  logTerm('info', `Loaded ${suite.totalTests} test cases across 4 tiers.`);
+});
+
+function logTerm(type, text) {
+  const body = document.getElementById('termBody');
+  const line = document.createElement('div');
+  line.className = 'term-line ' + type;
+  const now = new Date().toTimeString().slice(0, 8);
+  line.innerHTML = `<span class="ts">[${now}]</span><span class="prompt">$</span><span>${escapeHtml(text)}</span>`;
+  body.appendChild(line);
+  body.scrollTop = body.scrollHeight;
+}
+
+function escapeHtml(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderTestList() {
+  const container = document.getElementById('casesContainer');
+  container.innerHTML = '';
+
+  const tiers = [
+    { num: 1, name: 'Tier 1: 核心特征全覆盖 (Feature Coverage)' },
+    { num: 2, name: 'Tier 2: 边界病理防御 (Boundary & Corner)' },
+    { num: 3, name: 'Tier 3: 跨特征成对联动 (Cross-Feature Pairwise)' },
+    { num: 4, name: 'Tier 4: 真实综合工作流 (Real-World Workloads)' }
+  ];
+
+  tiers.forEach(tier => {
+    if (activeTierFilter !== 'all' && activeTierFilter !== tier.num) return;
+
+    let cases = suite.testCases.filter(t => t.tier === tier.num);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      cases = cases.filter(t => 
+        t.id.toLowerCase().includes(q) ||
+        t.title.toLowerCase().includes(q) ||
+        t.featureName.toLowerCase().includes(q)
+      );
+    }
+
+    if (cases.length === 0) return;
+
+    const group = document.createElement('div');
+    group.className = 'tier-group';
+
+    const header = document.createElement('div');
+    header.className = 'tier-header';
+    header.innerHTML = `
+      <div class="tier-header-left">
+        <span class="tier-title">${tier.name}</span>
+        <span class="tier-count-badge">${cases.length} 用例</span>
+      </div>
+      <span style="font-size: 12px; color: var(--ink-2); font-family: var(--font-mono);">▼ 折叠/展开</span>
+    `;
+
+    const list = document.createElement('div');
+    list.className = 'test-list';
+
+    header.onclick = () => {
+      list.style.display = list.style.display === 'none' ? 'flex' : 'none';
+    };
+
+    cases.forEach(tc => {
+      const item = document.createElement('div');
+      item.className = 'test-item';
+      item.id = 'dom-' + tc.id;
+
+      const res = testResultsMap[tc.id];
+      const statusClass = !res ? 'status-pending' : (res.passed ? 'status-pass' : 'status-fail');
+      const statusText = !res ? 'PENDING' : (res.passed ? 'PASS' : 'FAIL');
+      const durText = res ? `${res.durationMs}ms` : '';
+
+      item.innerHTML = `
+        <div class="test-top-row">
+          <div class="test-id-group">
+            <span class="badge-id">${tc.id}</span>
+            <span class="badge-feature">${escapeHtml(tc.featureName)}</span>
+            <span class="badge-req">${escapeHtml(tc.requirement)}</span>
+          </div>
+          <span class="test-status-badge ${statusClass}">${statusText}</span>
+        </div>
+        <div class="test-title">${escapeHtml(tc.title)}</div>
+        <div class="test-desc">${escapeHtml(tc.description)}</div>
+        <div class="test-meta-row">
+          <span>来源: ${escapeHtml(tc.expectedSource)}</span>
+          <span>目标: ${escapeHtml(tc.target)}</span>
+          <span style="margin-left: auto; font-weight: 600;">${durText}</span>
+        </div>
+        ${res && !res.passed ? `<div class="test-error-box">${escapeHtml(res.error)}</div>` : ''}
+      `;
+      list.appendChild(item);
+    });
+
+    group.appendChild(header);
+    group.appendChild(list);
+    container.appendChild(group);
+  });
+}
+
+function setFilter(tier, btn) {
+  activeTierFilter = tier;
+  document.querySelectorAll('#tierFilters .seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTestList();
+}
+
+function handleSearch() {
+  searchQuery = document.getElementById('searchInput').value.trim();
+  renderTestList();
+}
+
+function reloadSandbox() {
+  const frame = document.getElementById('targetIframe');
+  frame.src = frame.src;
+  logTerm('info', 'Sandbox iframe reloaded.');
+}
+
+async function runAllTests() {
+  if (!suite) return;
+
+  const btnRun = document.getElementById('btnRunAll');
+  btnRun.disabled = true;
+  btnRun.textContent = '⏳ 执行中...';
+
+  const pBar = document.getElementById('progressBar');
+  const pText = document.getElementById('progressStatusText');
+  const pPercent = document.getElementById('progressPercent');
+
+  pBar.className = 'progress-bar-fill';
+  pBar.style.width = '0%';
+  testResultsMap = {};
+
+  logTerm('info', 'Starting autonomous Prototype test verification run...');
+
+  let passed = 0;
+  let failed = 0;
+
+  const total = suite.totalTests;
+  const start = Date.now();
+
+  for (let i = 0; i < total; i++) {
+    const tc = suite.testCases[i];
+    const ctx = suite.createContext();
+
+    const t0 = Date.now();
+    let isPass = false;
+    let err = null;
+
+    try {
+      await tc.run(ctx);
+      isPass = true;
+      passed++;
+    } catch (e) {
+      isPass = false;
+      err = e.message || String(e);
+      failed++;
+      logTerm('fail', `[FAIL] ${tc.id}: ${err}`);
+    }
+
+    const dur = Date.now() - t0;
+    testResultsMap[tc.id] = { passed: isPass, error: err, durationMs: dur };
+
+    // Update progress
+    const current = i + 1;
+    const pct = Math.round((current / total) * 100);
+    pBar.style.width = pct + '%';
+    pPercent.textContent = pct + '%';
+    pText.textContent = `执行中: ${tc.id} (${current}/${total})`;
+
+    document.getElementById('hudPassed').textContent = passed;
+    document.getElementById('hudFailed').textContent = failed;
+    document.getElementById('hudPassRate').textContent = Math.round((passed / current) * 100) + '%';
+
+    if (current % 35 === 0 || current === total) {
+      logTerm('info', `Executed ${current}/${total} tests (${pct}%). Passed: ${passed}, Failed: ${failed}`);
+    }
+  }
+
+  const totalDur = Date.now() - start;
+  document.getElementById('hudDuration').textContent = totalDur + 'ms';
+
+  if (failed === 0) {
+    pBar.classList.add('done');
+    pText.textContent = '✔ 全部 210 项测试用例 100% 验证通过！';
+    logTerm('pass', `ALL 210 TESTS PASSED in ${totalDur}ms (100% Pass Rate). Zero regressions.`);
+  } else {
+    pBar.classList.add('has-err');
+    pText.textContent = `✖ 发现 ${failed} 处未通过，请检查错误详情`;
+    logTerm('fail', `Verification completed with ${failed} failures.`);
+  }
+
+  btnRun.disabled = false;
+  btnRun.textContent = '▶️ 一键运行全部';
+
+  renderTestList();
+}
+</script>
+
+</body>
+</html>

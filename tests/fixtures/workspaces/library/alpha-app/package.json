@@ -1,0 +1,7 @@
+{
+  "name": "alpha-app",
+  "description": "Alpha package fixture",
+  "dependencies": {
+    "zod": "4.5.4"
+  }
+}
