@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html data-page-node-id="HB1LdDrzFTDTySZ5QurDAg">
+<head data-page-node-id="9KCEGdtoONBBJF4jFlmYJO">
+<meta charset="utf-8" data-page-node-id="wkMH9LJ9i74DPHGOF6XvG0">
+<style>
+  :root {
+    --bg: #1E1C1B;
+    --card: #282625;
+    --text: #FDFCFC;
+    --muted: #8A8585;
+    --accent: #0071E3;
+    --accent-hover: #0066CC;
+    --border: #3A3635;
+    --success: #34C759;
+    --warn: #FF9F0A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.4;
+    user-select: none;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .title { font-weight: 700; font-size: 15px; }
+  .title span { color: var(--accent); }
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    color: var(--muted);
+  }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    margin-top: 14px;
+  }
+  .btn-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  button {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  button:hover {
+    background: #33302F;
+    border-color: #555;
+  }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-weight: 600;
+  }
+  button.primary:hover {
+    background: var(--accent-hover);
+  }
+  button.armed {
+    background: var(--warn);
+    color: #161413;
+    border: none;
+    font-weight: 700;
+  }
+  button:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  button:disabled:hover {
+    background: var(--card);
+    border-color: var(--border);
+  }
+
+  .panel-note {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.5;
+  }
+  .panel-note b { color: #C9C4C4; font-weight: 600; }
+
+  .page-list {
+    margin-top: 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    max-height: 236px;
+    overflow-y: auto;
+  }
+  .page-list:empty { display: none; }
+  .row {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+  .row:last-child { border-bottom: none; }
+  .row-head {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .idx {
+    font-family: ui-monospace, monospace;
+    color: var(--muted);
+    min-width: 14px;
+    flex-shrink: 0;
+  }
+  .name {
+    font-weight: 600;
+    word-break: break-all;
+  }
+  .name.rename { color: var(--accent); }
+  .arrow {
+    color: var(--muted);
+    margin: 3px 0 0 20px;
+    word-break: break-all;
+    font-family: ui-monospace, monospace;
+  }
+  .tag {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .tag.rename { color: var(--accent); border-color: var(--accent); }
+  .tag.archived { color: var(--success); border-color: #2C5F3C; }
+
+  .alert {
+    margin-top: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--warn);
+    color: var(--warn);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .alert:empty { display: none; }
+
+  .footer {
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+  }
+</style>
+</head>
+<body data-page-node-id="2vjDtHj8YeKoRhjZo800Xe">
+
+<div class="header" data-page-node-id="mugVjSRIUpvBnEivme1bdX">
+  <div class="title" data-page-node-id="Lnnv97FSlFVCXnf9QmRKms">Wonderwall-Pi <span data-page-node-id="Stsk01R2hgY8tjgzLNdPHD">Bridge</span></div>
+  <div class="status" data-page-node-id="oC6DeYwL3S3X0R66isaDRK"><span class="dot" data-page-node-id="rnto201VRAsdHtdDQDBbMf"></span>Ready</div>
+</div>
+
+<div class="section-label" data-page-node-id="XzvgOWg7vecRjvHYbZklQd">整理 Pages · 项目页面归档</div>
+<div class="btn-grid" data-page-node-id="PYpktiCpNE4GkjthpNH8lz">
+  <button id="btnScanPages" data-page-node-id="EfczFPUkiF3FStaJLzf1EV">
+    <span data-page-node-id="EEYmVmwpsZpeuI4i4r2A30">重新扫描当前页面</span>
+    <span data-page-node-id="RC2rkV9yGP5bqjkItg4lZl">⌕</span>
+  </button>
+  <button class="primary" id="btnApplyPages" data-page-node-id="bKeG9twD6SikLT2TiX5XUa">
+    <span id="applyLabel" data-page-node-id="D2vvrbaKFoZmyEbeMLQNEw">应用：重命名 + 排序</span>
+    <span data-page-node-id="GdHghESjpErGYk5oNHPRID">✓</span>
+  </button>
+</div>
+<div class="page-list" id="pageList" data-page-node-id="ju1f2pyCzUAfHAWv4nhalx"></div>
+<div class="alert" id="alertBox" data-page-node-id="T26ZKaVp28zAWZnuNbz3Bf"></div>
+<div class="detail" id="detailBox" data-page-node-id="w3YYhBtNcvcYsrGaUJwB7i"></div>
+<div class="panel-note" data-page-node-id="KLUEmetnCAwPLF3LyWdEP8">
+  只改<b data-page-node-id="LIYDtNLNlhLLLrhxaO3sfw">页面名</b>与<b data-page-node-id="aQZfhrUOjEQ0HnU06bhccN">排列顺序</b>，不进入任何页面内部图层。<br data-page-node-id="TA4x4XmHg4ktvKHEWUvjqE">
+  执行后可用 <b data-page-node-id="7NdID6CecBu2Hp7UqdvM65">Ctrl/Cmd + Z</b> 撤销。
+</div>
+
+<div class="section-label" data-page-node-id="WuefzilC07krHOAvd37RmS">一键生成核心规范资产</div>
+<div class="btn-grid" data-page-node-id="VJFG7EmUYK3DcBVADnbYqQ">
+  <button class="primary" id="btnSyncTokens" data-page-node-id="LtMW0WXqwS17KmaPB7dOjE">
+    <span data-page-node-id="Ha99jxiFHNgF2qsyV5HDuA">同步 Design Tokens 变量</span>
+    <span data-page-node-id="uq5SJMetBRfhOPX7WmdLdV">⚡</span>
+  </button>
+  <button id="btnIntentCard" data-page-node-id="yO0FD9ZbPxZfDs7gGYSVSM">
+    <span data-page-node-id="oBffpUrbPMoZyth1aoHraR">生成意图核对卡 (Intent Card)</span>
+    <span data-page-node-id="ACgE77TJjB15MaCCXJSL8J">+</span>
+  </button>
+  <button id="btnLightHint" data-page-node-id="cMljRI9l2xG4VNMBEUTvkF">
+    <span data-page-node-id="xGXHjtrA8ISIocPeREj9zK">生成模型适配轻提示条</span>
+    <span data-page-node-id="XPe4WOpfJBBCamr3QfMDuZ">+</span>
+  </button>
+  <button id="btnDesktopPage" data-page-node-id="k0qZo5YOSGTfpoSJ4B8ZNi">
+    <span data-page-node-id="yFP9ZeqUqyNDPdn1E9qODb">创建 1440×900 桌面画布</span>
+    <span data-page-node-id="4GYNZ92mkJkXnLAyuQyW7d">+</span>
+  </button>
+</div>
+
+<div class="section-label" data-page-node-id="zEAIcaVIiqwVrO6UufUsT2">远程桥接状态 (Local Bridge)</div>
+<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:11px;font-family:monospace;color:var(--muted);" data-page-node-id="6ZvuNzCx4WLgbveuVFmON6">
+  整理 Pages 面板无需桥接服务<br data-page-node-id="c0W8udVqczTj3KfXJVKwy7">
+  直接在本机 Figma 内执行
+</div>
+
+<div class="footer" data-page-node-id="aJf26PIlDiYy4GJQrhVsAl">
+  Wonderwall-Pi Agent · 毕业设计专用桥接
+</div>
+
+<script>
+  var pageList = document.getElementById('pageList');
+  var alertBox = document.getElementById('alertBox');
+  var applyBtn = document.getElementById('btnApplyPages');
+  var applyLabel = document.getElementById('applyLabel');
+  var armed = false;
+  var armedTimer = null;
+
+  function send(type, extra) {
+    var msg = { type: type };
+    if (extra) { for (var k in extra) { msg[k] = extra[k]; } }
+    parent.postMessage({ pluginMessage: msg }, '*');
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function disarm() {
+    armed = false;
+    if (armedTimer) { clearTimeout(armedTimer); armedTimer = null; }
+    applyBtn.classList.remove('armed');
+    applyBtn.classList.add('primary');
+    applyLabel.textContent = '应用：重命名 + 排序';
+  }
+
+  function renderPlan(plan) {
+    if (!plan || !plan.rows) return;
+
+    alertBox.style.borderColor = '';
+    alertBox.style.color = '';
+
+    var html = '';
+    plan.rows.forEach(function (row, i) {
+      var isRename = row.current !== row.next;
+      var tagClass = isRename ? 'rename' : (row.status === '已归档' ? 'archived' : '');
+      html += '<div class="row">';
+      html += '<div class="row-head">';
+      html += '<span class="idx">' + (i + 1) + '</span>';
+      html += '<span class="name' + (isRename ? ' rename' : '') + '">' + escapeHtml(row.current) + '</span>';
+      html += '<span class="tag ' + tagClass + '">' + escapeHtml(row.status) + '</span>';
+      html += '</div>';
+      if (isRename) {
+        html += '<div class="arrow">↳ ' + escapeHtml(row.next) + '</div>';
+      }
+      html += '</div>';
+    });
+    pageList.innerHTML = html;
+
+    var problems = [];
+    if (plan.suspicious) {
+      problems.push('⚠ 没有任何规则匹配上——打开的可能不是 Pioneer 文件。已拒绝改动，请先确认文件。');
+    } else if (plan.total && !plan.renamedCount && !plan.movedCount) {
+      problems.push('✓ 已是目标状态，无需改动。');
+    }
+    alertBox.innerHTML = problems.length ? problems.join('<br>') : '';
+    alertBox.style.display = problems.length ? 'block' : 'none';
+
+    var bits = [];
+    if (plan.skipped && plan.skipped.length) {
+      bits.push('幂等跳过：' + plan.skipped.map(function (s) {
+        return escapeHtml(s.from) + '（' + escapeHtml(s.reason) + '）';
+      }).join('；'));
+    }
+    if (plan.notFound && plan.notFound.length) {
+      bits.push('源页不存在，已忽略：' + escapeHtml(plan.notFound.join(' / ')));
+    }
+    detailBox.innerHTML = bits.join('<br>');
+
+    applyBtn.disabled = !!plan.suspicious || !(plan.renamedCount || plan.movedCount);
+  }
+
+  document.getElementById('btnScanPages').onclick = function () {
+    disarm();
+    send('preview-pages');
+  };
+
+  // 两段式确认：Figma 插件的 iframe 里 window.confirm 不可靠，
+  // 改成按钮自身进入 armed 态，再点一次才执行。
+  applyBtn.onclick = function () {
+    if (applyBtn.disabled) return;
+    if (!armed) {
+      armed = true;
+      applyBtn.classList.remove('primary');
+      applyBtn.classList.add('armed');
+      applyLabel.textContent = '再点一次确认应用';
+      armedTimer = setTimeout(disarm, 5000);
+      return;
+    }
+    disarm();
+    send('apply-pages');
+  };
+
+  document.getElementById('btnSyncTokens').onclick = function () {
+    parent.postMessage({ pluginMessage: { type: 'sync-tokens' } }, '*');
+  };
+  document.getElementById('btnIntentCard').onclick = function () {
+    parent.postMessage({ pluginMessage: { type: 'create-intent-card' } }, '*');
+  };
+  document.getElementById('btnLightHint').onclick = function () {
+    parent.postMessage({ pluginMessage: { type: 'create-light-hint' } }, '*');
+  };
+  document.getElementById('btnDesktopPage').onclick = function () {
+    parent.postMessage({ pluginMessage: { type: 'create-desktop-page', title: 'Bookshelf Workspace' } }, '*');
+  };
+
+  window.onmessage = function (event) {
+    var msg = event.data && event.data.pluginMessage;
+    if (!msg) return;
+    if (msg.type === 'pages-preview') {
+      renderPlan(msg.plan);
+    } else if (msg.type === 'pages-applied') {
+      renderPlan(msg.plan);
+      var r = msg.result || {};
+      alertBox.style.display = 'block';
+      alertBox.style.borderColor = 'var(--success)';
+      alertBox.style.color = 'var(--success)';
+      alertBox.innerHTML = '✓ 整理完成：' + (r.renamed || 0) + ' 个页面改名，'
+        + (r.moved || 0) + ' 处顺序调整。可用 Ctrl/Cmd + Z 撤销。';
+    }
+  };
+
+  // UI 就绪后请求一次只读扫描
+  send('ui-ready');
+</script>
+
+</body>
+</html>
