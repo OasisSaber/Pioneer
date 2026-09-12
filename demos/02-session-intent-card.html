@@ -1,0 +1,1860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 02 · 意图核对与执行会话 · Pioneer Desktop Assistant</title>
+<style>
+/* ==========================================================================
+   Apple HIG × Opencode 设计变量系统 (Design Tokens)
+   ========================================================================== */
+:root {
+  --canvas:           #FDFCFC;
+  --surface:          #F5F5F7;
+  --surface-2:        #F8F7F7;
+  --surface-elevated: #FFFFFF;
+
+  --ink:              #1D1D1F;
+  --ink-2:            #6E6E73;
+  --ink-3:            #86868B;
+
+  --line:             #E0DEDE;
+  --line-subtle:      #EBEAEA;
+  --line-strong:      #4B4646;
+
+  --accent:           #0071E3;
+  --accent-hover:     #0066CC;
+  --accent-light:     #EBF5FF;
+  --accent-focus:     rgba(0, 113, 227, 0.25);
+
+  --success:          #34C759;
+  --success-bg:       #EBF8EE;
+  --warning:          #FF9500;
+  --warning-bg:       #FFF7EB;
+  --danger:           #FF3B30;
+  --danger-bg:        #FFF2F1;
+
+  --dark-canvas:      #0E0D0D;
+  --dark-surface:     #161413;
+  --dark-surface-2:   #1E1C1B;
+  --dark-line:        #2E2A29;
+  --dark-line-strong: #3A3635;
+  --on-dark:          #FDFCFC;
+  --on-dark-2:        #8A8585;
+  --on-dark-3:        #5C5756;
+
+  --acrylic-light:    rgba(255, 255, 255, 0.86);
+  --modal-backdrop:   rgba(0, 0, 0, 0.55);
+
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+               "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", "SF Mono", "JetBrains Mono",
+               "Sarasa Gothic SC", "Sarasa Mono SC", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ==========================================================================
+   全局重置与 16:9 响应式舞台引擎
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dark-canvas);
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.stage-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark-canvas);
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  background: var(--canvas);
+  transform-origin: center center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 按钮与通用胶囊规范 */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.btn-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn-pill.p0 {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.btn-pill.p0:hover {
+  background: var(--accent-hover);
+}
+.btn-pill.p1 {
+  background: var(--surface-elevated);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-pill.p1:hover {
+  background: var(--surface);
+  border-color: #B4B4B9;
+}
+.btn-pill.p-dark {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-line);
+  color: var(--on-dark);
+}
+.btn-pill.p-dark:hover {
+  background: #282524;
+  border-color: var(--dark-line-strong);
+}
+
+.badge-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--surface-elevated);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.badge-capsule.success {
+  background: var(--success-bg);
+  border-color: rgba(52, 199, 89, 0.3);
+  color: #1E7E34;
+}
+.badge-capsule.warning {
+  background: var(--warning-bg);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #B26A00;
+}
+.badge-capsule.accent {
+  background: var(--accent-light);
+  border-color: rgba(0, 113, 227, 0.25);
+  color: var(--accent);
+}
+.badge-capsule.dark {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-line);
+  color: var(--on-dark-2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  display: inline-block;
+}
+.status-dot.green {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
+}
+.status-dot.blue {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.5);
+}
+
+/* ==========================================================================
+   顶栏视窗条 (App Topbar)
+   ========================================================================== */
+.app-topbar {
+  height: 52px;
+  min-height: 52px;
+  background: var(--acrylic-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  user-select: none;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.traffic-light.close { background: #FF5F56; border: 1px solid #E0443E; }
+.traffic-light.min { background: #FFBD2E; border: 1px solid #DEA123; }
+.traffic-light.max { background: #27C93F; border: 1px solid #1AAB29; }
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  text-decoration: none;
+}
+.app-brand svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+.app-brand span { color: var(--accent); }
+.brand-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.session-tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.session-tag-pill b { color: var(--ink); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.model-runtime-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   二级场景切换栏 (Scene Bar, Height: 44px)
+   ========================================================================== */
+.scene-bar {
+  height: 44px;
+  min-height: 44px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  z-index: 50;
+}
+.scene-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.scene-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+.scene-selector {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--canvas);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+}
+.scene-btn {
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.scene-btn svg {
+  width: 13px;
+  height: 13px;
+}
+.scene-btn.active {
+  background: var(--surface-elevated);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.scene-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   用户提问胶囊条 (User Prompt Bubble)
+   ========================================================================== */
+.user-query-strip {
+  padding: 10px 28px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.user-query-text {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-query-text span.q-icon {
+  color: var(--accent);
+  font-weight: 700;
+}
+.user-meta {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* ==========================================================================
+   模块化网格容器 (动态重排)
+   ========================================================================== */
+.modular-grid {
+  flex: 1;
+  display: grid;
+  gap: 16px;
+  padding: 16px 28px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+/* 场景 1: 输入执行 (Input Mode / 旧 Focus) */
+.modular-grid.scene-input,
+.modular-grid.scene-focus {
+  grid-template-columns: 480px 1fr;
+  grid-template-rows: 1fr;
+}
+.modular-grid.scene-input .panel-tree,
+.modular-grid.scene-input .panel-gallery,
+.modular-grid.scene-focus .panel-tree,
+.modular-grid.scene-focus .panel-gallery {
+  display: none;
+}
+
+/* 场景 2: 意图审阅 (Intent Review Mode) */
+.modular-grid.scene-review {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr;
+}
+.modular-grid.scene-review .panel-tree {
+  display: none;
+}
+.modular-grid.scene-review .panel-terminal {
+  display: none;
+}
+.modular-grid.scene-review .panel-gallery {
+  display: flex;
+}
+
+/* 场景 3: 任务交付成果与输出 (Output Mode / 旧 Gallery) */
+.modular-grid.scene-output,
+.modular-grid.scene-gallery {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+}
+.modular-grid.scene-output .panel-intent,
+.modular-grid.scene-output .panel-terminal,
+.modular-grid.scene-output .panel-tree,
+.modular-grid.scene-gallery .panel-intent,
+.modular-grid.scene-gallery .panel-terminal,
+.modular-grid.scene-gallery .panel-tree {
+  display: none;
+}
+.modular-grid.scene-output .panel-gallery,
+.modular-grid.scene-gallery .panel-gallery {
+  display: flex;
+}
+
+/* 通用面板规范 */
+.workspace-panel {
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+.panel-header {
+  height: 42px;
+  min-height: 42px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  user-select: none;
+}
+.panel-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel-title svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+/* ----------------------------------------------------
+   面板 1: 意图核对卡 (Intent Card Panel)
+   ---------------------------------------------------- */
+.panel-intent {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.intent-card-inner {
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.intent-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.intent-title-big {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+.intent-summary-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 13px 15px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+.intent-summary-box b {
+  color: var(--ink);
+}
+
+.plan-steps-group {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.plan-step-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.plan-step-row.active {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+.plan-step-row.completed {
+  border-color: rgba(52, 199, 89, 0.3);
+  background: var(--success-bg);
+}
+.step-text-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.step-idx {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 12px;
+}
+.plan-step-row.completed .step-idx {
+  color: #1E7E34;
+}
+
+.intent-footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.kbd-hint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+kbd {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 2px 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink);
+  box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+}
+
+/* ----------------------------------------------------
+   面板 2: Opencode 极简事件流终端面板 (#terminalPanel)
+   ---------------------------------------------------- */
+.panel-terminal {
+  background: var(--dark-surface);
+  border-color: var(--dark-line);
+  color: var(--on-dark);
+}
+.panel-terminal .panel-header {
+  background: var(--dark-surface-2);
+  border-bottom-color: var(--dark-line);
+}
+.panel-terminal .panel-title {
+  color: var(--on-dark);
+}
+
+.terminal-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--dark-surface);
+}
+
+.term-line {
+  display: flex;
+  gap: 10px;
+  word-break: break-all;
+}
+.term-line .time {
+  color: var(--on-dark-2);
+  font-size: 11.5px;
+  flex-shrink: 0;
+}
+.term-line .prompt-symbol {
+  color: var(--accent);
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.term-line.info { color: var(--on-dark); }
+.term-line.tool { color: #5AC8FA; }
+.term-line.success { color: #34C759; }
+.term-line.agent { color: #E0DEDE; }
+.term-line.warning { color: var(--warning); }
+
+.cursor-blink {
+  display: inline-block;
+  width: 8px;
+  height: 15px;
+  background: var(--accent);
+  vertical-align: middle;
+  margin-left: 4px;
+  animation: cursorBlink 1s infinite;
+}
+@keyframes cursorBlink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+/* 实时工具调用胶囊条 (Sticky Bottom) */
+.tool-calling-sticky {
+  background: var(--dark-surface-2);
+  border-top: 1px solid var(--dark-line);
+  padding: 9px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.tool-status-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pulse-spinner {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulseTool 1.2s infinite ease-in-out;
+}
+@keyframes pulseTool {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 8px var(--accent); }
+  100% { transform: scale(0.8); opacity: 0.6; }
+}
+
+/* 模型自适应轻提示条 */
+.adaptive-hint-strip {
+  background: #1B1817;
+  border-top: 1px solid var(--dark-line-strong);
+  padding: 8px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--on-dark-2);
+}
+.adaptive-hint-strip b {
+  color: var(--on-dark);
+}
+.adaptive-link {
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: none;
+  font-weight: 600;
+}
+.adaptive-link:hover { text-decoration: underline; }
+
+/* ----------------------------------------------------
+   面板 3: 会话分支树与时光机面板 (#sessionTreePanel)
+   ---------------------------------------------------- */
+.panel-tree {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.tree-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.dag-node {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  position: relative;
+  cursor: pointer;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.15s;
+}
+.dag-node:hover {
+  background: var(--surface);
+}
+.dag-node.active-head {
+  background: var(--accent-light);
+  border: 1px solid rgba(0, 113, 227, 0.25);
+}
+
+.dag-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 18px;
+  flex-shrink: 0;
+}
+.dag-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--line-strong);
+  background: #fff;
+  z-index: 2;
+  transition: all 0.15s;
+}
+.dag-node.active-head .dag-dot {
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: 0 0 8px rgba(0, 113, 227, 0.5);
+}
+.dag-line {
+  position: absolute;
+  top: 15px;
+  bottom: -22px;
+  width: 2px;
+  background: var(--line);
+  z-index: 1;
+}
+.dag-node:last-child .dag-line { display: none; }
+
+.dag-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dag-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.dag-node-id {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.dag-node-time {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.dag-node-desc {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.4;
+}
+
+/* ----------------------------------------------------
+   面板 4: 成果画廊与任务收尾概览 (#galleryArea)
+   ---------------------------------------------------- */
+.panel-gallery {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--canvas);
+}
+
+.wrapup-hero-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.wrapup-hero-info h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.wrapup-hero-info p {
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.metrics-strip {
+  display: flex;
+  gap: 20px;
+}
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+.metric-box .metric-val {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.metric-box .metric-lbl {
+  font-size: 10.5px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.artifacts-grid-mini {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.artifact-card-mini {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+.artifact-card-mini .name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.artifact-card-mini .meta {
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* 全局底部微型状态栏 */
+.global-statusbar {
+  height: 32px;
+  min-height: 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 0 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  user-select: none;
+}
+.statusbar-left, .statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.statusbar-highlight {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* 轻量 Toast 提示系统 */
+.toast-shelf {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.toast-msg {
+  background: rgba(22, 20, 19, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 8px 20px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: toastPop 3s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@keyframes toastPop {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* 模态弹窗系统 (Modal) */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--modal-backdrop);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal-box {
+  width: 820px;
+  max-height: 85%;
+  background: var(--surface-elevated);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-header {
+  height: 52px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+.modal-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+}
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.modal-footer {
+  height: 56px;
+  padding: 0 24px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  background: var(--surface);
+}
+</style>
+</head>
+<body>
+
+<div class="stage-viewport">
+  <main class="stage" id="mainStage">
+
+    <!-- 顶栏视窗条 -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <div class="traffic-lights">
+          <div class="traffic-light close" onclick="showToast('macOS 窗口关闭模拟')"></div>
+          <div class="traffic-light min" onclick="showToast('macOS 窗口最小化模拟')"></div>
+          <div class="traffic-light max" onclick="toggleFullScreen()"></div>
+        </div>
+        <a href="./01-bookshelf-workspace.html" class="app-brand" title="返回海报墙首页">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          Pioneer <span>Session</span>
+          <span class="brand-badge">Demo 02</span>
+        </a>
+      </div>
+
+      <div class="topbar-center">
+        <div class="session-tag-pill">
+          会话: <b>毕业设计开题材料与规范对齐</b>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="model-runtime-pill">
+          <span class="status-dot green"></span>
+          Qwen3.6-27B · local
+        </div>
+        <button class="btn-pill p1" onclick="showToast('模型配置已锁定为 Qwen3.6-27B 本地推理引擎')">模型详情</button>
+      </div>
+    </header>
+
+    <!-- 二级工作区场景切换栏 (Scene Bar, Height: 44px) -->
+    <div class="scene-bar">
+      <div class="scene-left">
+        <span class="scene-label">工作区场景:</span>
+        <div class="scene-selector">
+          <button class="scene-btn active" id="btnSceneInput" onclick="setScene('input')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+            输入
+          </button>
+          <button class="scene-btn" id="btnSceneReview" onclick="setScene('review')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            审阅
+          </button>
+          <button class="scene-btn" id="btnSceneOutput" onclick="setScene('output')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            输出
+          </button>
+        </div>
+      </div>
+
+      <div class="scene-right">
+        <span class="badge-capsule accent" id="projectActiveCapsule">当前工程: demo-thesis-2027</span>
+        <button class="btn-pill p0" onclick="triggerFastDemoLoop()" title="一键运行全流程模拟闭环">
+          🚀 演示闭环
+        </button>
+      </div>
+    </div>
+
+    <!-- 用户提问气泡条 -->
+    <div class="user-query-strip">
+      <div class="user-query-text">
+        <span class="q-icon">PROMPT &gt;</span>
+        “帮我检查开题材料与 PPT 逐页文案的对应关系，把导师和学生个人信息补齐，并生成规范的交付清单。”
+      </div>
+      <div class="user-meta">13:12 · 本地工作区</div>
+    </div>
+
+    <!-- 模块化网格容器 (#modularWorkspaceGrid) -->
+    <div class="modular-grid scene-input" id="modularWorkspaceGrid">
+
+      <!-- ----------------------------------------------------------
+           面板 1: 意图核对卡面板 (#intentCard)
+           ---------------------------------------------------------- -->
+      <div class="workspace-panel panel-intent" id="intentCard">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+            意图核对卡 · 前置拍板闸门
+          </span>
+          <span class="badge-capsule accent" id="intentStateBadge">● 等待拍板</span>
+        </div>
+
+        <div class="intent-card-inner">
+          <div class="intent-banner">
+            <span class="badge-capsule success">安全等级: 零破坏性修改 · 100% 可撤回</span>
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);">快照 ID: #CHK-0903</span>
+          </div>
+
+          <h2 class="intent-title-big">
+            理解核对：对齐开题汇报 8 页文案与个人信息注入
+          </h2>
+
+          <div class="intent-summary-box">
+            Agent 理解您的核心诉求是<b>文案事实一致性校验</b>与<b>开题材料收尾</b>。为防止模型幻觉覆盖现有设计，将采用单文件原子覆写策略，并在修改前保留 Git 快照。
+          </div>
+
+          <!-- 分步计划 (3-Step Plan) -->
+          <div class="plan-steps-group" id="planStepsContainer">
+            <div class="plan-step-row completed" id="step-1">
+              <div class="step-text-left">
+                <span class="step-idx">01</span>
+                <span>校验 <code>开题PPT逐页文案.md</code> 与 8 页 HTML Slide 结构映射</span>
+              </div>
+              <span class="badge-capsule success">✓ 已对齐</span>
+            </div>
+
+            <div class="plan-step-row completed" id="step-2">
+              <div class="step-text-left">
+                <span class="step-idx">02</span>
+                <span>注入个人信息：演示用户 · 2026000000 · 示例班级 · 指导老师</span>
+              </div>
+              <span class="badge-capsule success">✓ 已就绪</span>
+            </div>
+
+            <div class="plan-step-row active" id="step-3">
+              <div class="step-text-left">
+                <span class="step-idx">03</span>
+                <span>生成 Figma Make 提示词与 3 页设计范例 / 3 份交互页面 Demo</span>
+              </div>
+              <span class="badge-capsule accent" id="step3StatusBadge">● 准备执行</span>
+            </div>
+          </div>
+
+          <!-- 拍板操作栏 -->
+          <div class="intent-footer-actions">
+            <div style="display:flex;gap:10px;align-items:center;">
+              <button class="btn-pill p0" id="execBtn" onclick="approveIntent('intent-gd-01')">
+                批准执行 <kbd>Enter</kbd>
+              </button>
+              <button class="btn-pill p1" onclick="showToast('已进入方案步骤编辑模式')">
+                修改计划 <kbd>E</kbd>
+              </button>
+            </div>
+            <div class="kbd-hint">
+              回车批准 / <kbd>Esc</kbd> 取消
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ----------------------------------------------------------
+           面板 2: Opencode 极简事件流终端面板 (#terminalPanel)
+           ---------------------------------------------------------- -->
+      <div class="workspace-panel panel-terminal" id="terminalPanel">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+            OPENCODE EVENT STREAM TERMINAL · [ qwen3.6-27b@localhost:11434 ]
+          </span>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge-capsule dark" id="termEventCount">18 Events</span>
+            <button class="btn-pill p-dark" style="height:24px;padding:0 8px;font-size:11px;" onclick="clearTerminalLogs()">清屏</button>
+          </div>
+        </div>
+
+        <!-- 终端日志输出流动区 (#terminalLogs / #logStream) -->
+        <div class="terminal-scroll-area" id="terminalLogs">
+          <div class="term-line info"><span class="time">[13:10:01]</span><span class="prompt-symbol">$</span><span>pioneer-agent: session tree initialized (Append-Only JSONL store)</span></div>
+          <div class="term-line info"><span class="time">[13:10:02]</span><span class="prompt-symbol">$</span><span>runtime: loaded model profile "profiles/qwen3.6-27b.yaml"</span></div>
+          <div class="term-line tool"><span class="time">[13:10:03]</span><span class="prompt-symbol">⚙</span><span>[Tool Call] fs.read_file("开题材料·需求与验收.md") -&gt; OK (7,563 bytes in 8ms)</span></div>
+          <div class="term-line tool"><span class="time">[13:10:04]</span><span class="prompt-symbol">⚙</span><span>[Tool Call] git.diff("开题PPT逐页文案.md") -&gt; +演示用户 +指导教师 (124ms)</span></div>
+          <div class="term-line info"><span class="time">[13:10:05]</span><span class="prompt-symbol">$</span><span>intent-card: generated proposal checkpoint #CHK-0903</span></div>
+          <div class="term-line warning" id="liveStatus"><span class="time">[13:10:06]</span><span class="prompt-symbol">$</span><span>waiting for user authorization on Intent Card...</span><span class="cursor-blink"></span></div>
+        </div>
+
+        <!-- 实时工具调用胶囊条 (Sticky Bottom) -->
+        <div class="tool-calling-sticky" id="toolCallingSticky">
+          <div class="tool-status-left">
+            <span class="pulse-spinner"></span>
+            <span id="toolCallingName">[RUNNING 124ms] call: read_file("开题材料·需求与验收.md")</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge-capsule dark" id="toolDuration">耗时: 124ms</span>
+            <span class="badge-capsule success" id="toolStatusPill">SUCCESS</span>
+          </div>
+        </div>
+
+        <!-- 模型自适应轻提示条 -->
+        <div class="adaptive-hint-strip">
+          <div>
+            <span class="badge-capsule dark" style="background:#0071E3;color:#fff;border:none;">Qwen3.6 适配</span>
+            <span>&nbsp;$ 遇到大目录递归易早停，已自动挂载深度遍历策略</span>
+          </div>
+          <a class="adaptive-link" onclick="showAblationModal()">查看规则与消融对比 →</a>
+        </div>
+      </div>
+
+      <!-- ----------------------------------------------------------
+           面板 3: 会话分支树与时光机面板 (#sessionTreePanel)
+           ---------------------------------------------------------- -->
+      <div class="workspace-panel panel-tree" id="sessionTreePanel">
+        <div class="panel-header">
+          <span class="panel-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="18" r="3"></circle><circle cx="6" cy="6" r="3"></circle><path d="M6 9v12"></path><path d="M18 9a9 9 0 0 0-9 9"></path></svg>
+            会话分支树 (Session Tree DAG)
+          </span>
+          <button class="btn-pill p1" style="height:24px;padding:0 8px;font-size:11px;" onclick="showToast('✔ 已开辟实验子分支: branch-intent-alt')">+ 分叉</button>
+        </div>
+
+        <div class="tree-scroll-area" id="sessionTree">
+          <!-- 节点 1 -->
+          <div class="dag-node" id="node-001" onclick="rewindToNode('001')">
+            <div class="dag-indicator">
+              <div class="dag-dot"></div>
+              <div class="dag-line"></div>
+            </div>
+            <div class="dag-content">
+              <div class="dag-title-row">
+                <span class="dag-node-id">#001 初始化扫描</span>
+                <span class="dag-node-time">13:10</span>
+              </div>
+              <span class="dag-node-desc">解析工程目录与技术栈特征</span>
+            </div>
+          </div>
+
+          <!-- 节点 2 -->
+          <div class="dag-node" id="node-002" onclick="rewindToNode('002')">
+            <div class="dag-indicator">
+              <div class="dag-dot"></div>
+              <div class="dag-line"></div>
+            </div>
+            <div class="dag-content">
+              <div class="dag-title-row">
+                <span class="dag-node-id">#002 意图核实批准</span>
+                <span class="dag-node-time">13:12</span>
+              </div>
+              <span class="dag-node-desc">人工通过意图核对卡闸门</span>
+            </div>
+          </div>
+
+          <!-- 节点 3 (当前活跃 HEAD) -->
+          <div class="dag-node active-head" id="node-003" onclick="rewindToNode('003')">
+            <div class="dag-indicator">
+              <div class="dag-dot"></div>
+              <div class="dag-line"></div>
+            </div>
+            <div class="dag-content">
+              <div class="dag-title-row">
+                <span class="dag-node-id">#003 局部原子打补丁 (HEAD)</span>
+                <span class="dag-node-time">13:14</span>
+              </div>
+              <span class="dag-node-desc">注入演示用户与指导教师个人信息</span>
+            </div>
+          </div>
+
+          <!-- 节点 4 -->
+          <div class="dag-node" id="node-004" onclick="rewindToNode('004')">
+            <div class="dag-indicator">
+              <div class="dag-dot"></div>
+              <div class="dag-line"></div>
+            </div>
+            <div class="dag-content">
+              <div class="dag-title-row">
+                <span class="dag-node-id">#004 交付画廊生成</span>
+                <span class="dag-node-time">13:15</span>
+              </div>
+              <span class="dag-node-desc">沉淀 6 份高保真设计产物与 Demo</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ----------------------------------------------------------
+           面板 4: 成果画廊概览面板 (#galleryArea)
+           ---------------------------------------------------------- -->
+      <div class="workspace-panel panel-gallery" id="galleryArea">
+        <div class="wrapup-hero-card">
+          <div class="wrapup-hero-info">
+            <h2>任务会话执行与交付全景</h2>
+            <p>已完成开题汇报文案校验、个人信息注入、3 页规范范例与 3 份交互页面落地。</p>
+          </div>
+          <div class="metrics-strip">
+            <div class="metric-box">
+              <span class="metric-val" style="color:var(--accent);">12.4s</span>
+              <span class="metric-lbl">总执行耗时</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-val" style="color:#34C759;">0</span>
+              <span class="metric-lbl">Token 费用 (Local)</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-val">6 份</span>
+              <span class="metric-lbl">产生产物</span>
+            </div>
+            <div class="metric-box">
+              <span class="metric-val" style="color:#34C759;">100%</span>
+              <span class="metric-lbl">AST 校验通过</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="artifacts-grid-mini">
+          <div class="artifact-card-mini">
+            <span class="name">00-pioneer-workbench.html</span>
+            <span class="meta">38.2 KB · 核心工作台原型</span>
+          </div>
+          <div class="artifact-card-mini">
+            <span class="name">01-bookshelf-workspace.html</span>
+            <span class="meta">14.0 KB · 媒体库海报墙</span>
+          </div>
+          <div class="artifact-card-mini">
+            <span class="name">02-session-intent-card.html</span>
+            <span class="meta">11.8 KB · PR 模块化执行</span>
+          </div>
+          <div class="artifact-card-mini">
+            <span class="name">03-wrapup-and-gallery.html</span>
+            <span class="meta">22.4 KB · 成果画廊与收尾</span>
+          </div>
+          <div class="artifact-card-mini">
+            <span class="name">04-ppt-presentation-demo.html</span>
+            <span class="meta">45.0 KB · 答辩幻灯片舞台</span>
+          </div>
+          <div class="artifact-card-mini">
+            <span class="name">开题PPT逐页文案.md</span>
+            <span class="meta">8.4 KB · 个人信息已对齐</span>
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;padding-top:10px;">
+          <a href="./03-wrapup-and-gallery.html" class="btn-pill p0">前往成果画廊与收尾页 →</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 全局底部微型状态栏 -->
+    <footer class="global-statusbar">
+      <div class="statusbar-left">
+        <span>执行状态: <b class="statusbar-highlight" id="footerExecStatus">等待拍板 (Standby)</b></span>
+        <span>分支节点: <b class="statusbar-highlight" id="footerNodeStatus">#003 (HEAD)</b></span>
+      </div>
+      <div class="statusbar-right">
+        <span>当前模型: <b class="statusbar-highlight">Qwen3.6-27B (local)</b></span>
+        <span>快捷键: <kbd>Enter</kbd> 批准执行 / <kbd>Alt+0..4</kbd> 页面切换</span>
+      </div>
+    </footer>
+
+    <!-- 轻量 Toast 提示挂载区 -->
+    <div class="toast-shelf" id="toastShelf"></div>
+
+    <!-- 模型自适应消融对比弹窗 (#ablationModal) -->
+    <div class="modal-overlay" id="ablationModal">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3>模型病理自适应消融对比 (Adaptive Ablation Analysis)</h3>
+          <button class="btn-pill p1" style="height:28px;padding:0 10px;" onclick="closeAblationModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="margin-bottom:14px;color:var(--ink-2);">
+            在处理长路径大目录的递归文件扫描与多次补丁覆写时，开源量化模型（如 Qwen3.6-27B）易触发 Context Limit 早停病理。Pioneer 架构挂载自适应单文件原子写入与深度遍历策略，收敛率对比实验结果如下：
+          </p>
+          <div style="text-align:center;padding:12px;background:var(--surface);border-radius:10px;border:1px solid var(--line);margin-bottom:16px;">
+            <svg width="600" height="180" viewBox="0 0 600 180">
+              <line x1="60" y1="140" x2="540" y2="140" stroke="#C7C6C6" stroke-width="1.5"/>
+              <line x1="60" y1="30" x2="60" y2="140" stroke="#C7C6C6" stroke-width="1.5"/>
+              <!-- Pioneer 自适应折线 -->
+              <polyline points="60,135 150,90 270,55 390,38 510,32" fill="none" stroke="#0071E3" stroke-width="3"/>
+              <!-- 原生早停折线 -->
+              <polyline points="60,135 150,110 270,132 390,138 510,138" fill="none" stroke="#FF3B30" stroke-width="2" stroke-dasharray="5 5"/>
+              <text x="520" y="36" fill="#0071E3" font-size="12" font-weight="700">Pioneer 自适应 (100%)</text>
+              <text x="520" y="142" fill="#FF3B30" font-size="12" font-weight="700">原生 Qwen (早停)</text>
+              <text x="280" y="165" fill="var(--ink-3)" font-size="11">任务轮次推进 (Tau-2 Benchmark Steps)</text>
+            </svg>
+          </div>
+          <table style="width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px;">
+            <thead>
+              <tr style="background:var(--surface);border-bottom:1px solid var(--line);text-align:left;">
+                <th style="padding:8px 12px;">配置策略</th>
+                <th style="padding:8px 12px;">早停失效率</th>
+                <th style="padding:8px 12px;">AST 一致性</th>
+                <th style="padding:8px 12px;">平均执行耗时</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom:1px solid var(--line);">
+                <td style="padding:8px 12px;">原生 Qwen3.6-27B (无补丁)</td>
+                <td style="padding:8px 12px;color:var(--danger);">38.4% (早停中断)</td>
+                <td style="padding:8px 12px;">64.2%</td>
+                <td style="padding:8px 12px;">18.6s</td>
+              </tr>
+              <tr style="background:var(--accent-light);color:var(--accent);font-weight:600;">
+                <td style="padding:8px 12px;">Pioneer 自适应策略 (原子补丁)</td>
+                <td style="padding:8px 12px;color:var(--success);">0.0% (零中断)</td>
+                <td style="padding:8px 12px;color:var(--success);">100.0%</td>
+                <td style="padding:8px 12px;">12.4s</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-pill p0" onclick="closeAblationModal()">已知悉 · 关闭 [Esc]</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ====================================================================
+     Pioneer Universal Quick Switcher HUD (Apple HIG x Opencode)
+     ==================================================================== -->
+<style id="pioneer-nav-hud-style">
+.pioneer-nav-hud {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 3px 6px;
+  background: rgba(18, 17, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  user-select: none;
+  font-family: "SF Mono", "Sarasa Mono SC", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+.pioneer-hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDFCFC;
+  letter-spacing: 0.5px;
+}
+.pioneer-hud-brand .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0071E3;
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.8);
+}
+.pioneer-hud-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+}
+.pioneer-hud-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pioneer-hud-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(253, 253, 252, 0.72);
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.pioneer-hud-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FDFCFC;
+  transform: translateY(-1px);
+}
+.pioneer-hud-link.active {
+  background: #0071E3;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.45);
+  cursor: default;
+  transform: none;
+}
+.pioneer-hud-link kbd {
+  font-size: 9px;
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 400;
+}
+.pioneer-hud-link.active kbd {
+  background: rgba(255, 255, 255, 0.25);
+  opacity: 0.85;
+}
+</style>
+
+<nav class="pioneer-nav-hud" id="pioneerNavHUD" aria-label="原型快速切换导航">
+  <div class="pioneer-hud-brand">
+    <span class="dot"></span>
+    <span>PIONEER</span>
+  </div>
+  <div class="pioneer-hud-divider"></div>
+  <div class="pioneer-hud-links">
+    <a href="./00-pioneer-workbench.html" class="pioneer-hud-link" id="hud-link-00" title="快捷键: Alt+0">
+      <span>🚀 主工作台</span><kbd>0</kbd>
+    </a>
+    <a href="./01-bookshelf-workspace.html" class="pioneer-hud-link" id="hud-link-01" title="快捷键: Alt+1">
+      <span>🎬 媒体库海报墙</span><kbd>1</kbd>
+    </a>
+    <a href="./02-session-intent-card.html" class="pioneer-hud-link active" id="hud-link-02" title="快捷键: Alt+2">
+      <span>⚡ 任务会话</span><kbd>2</kbd>
+    </a>
+    <a href="./03-wrapup-and-gallery.html" class="pioneer-hud-link" id="hud-link-03" title="快捷键: Alt+3">
+      <span>📦 成果画廊</span><kbd>3</kbd>
+    </a>
+    <a href="./04-ppt-presentation-demo.html" class="pioneer-hud-link" id="hud-link-04" title="快捷键: Alt+4">
+      <span>📑 答辩幻灯片</span><kbd>4</kbd>
+    </a>
+  </div>
+</nav>
+
+<script>
+/**
+ * -------------------------------------------------------------------------
+ * 1. 16:9 黄金比例响应式舞台引擎
+ * -------------------------------------------------------------------------
+ */
+function resizeStage() {
+  const stage = document.getElementById('mainStage');
+  if (!stage) return;
+  const targetW = 1920;
+  const targetH = 1080;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const scale = Math.min(w / targetW, h / targetH);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeStage);
+window.addEventListener('DOMContentLoaded', resizeStage);
+
+/**
+ * -------------------------------------------------------------------------
+ * 2. 状态管理
+ * -------------------------------------------------------------------------
+ */
+const AppState = {
+  activeScene: 'focus',
+  intentStatus: 'pending', // 'pending' | 'approved' | 'completed'
+  currentNodeId: '003'
+};
+
+/**
+ * -------------------------------------------------------------------------
+ * 3. Premiere Pro 模块化场景切换 (R2.1)
+ * -------------------------------------------------------------------------
+ */
+function setScene(sceneId) {
+  // 场景归纳收敛: focus -> input, panoramic -> review, gallery -> output
+  if (sceneId === 'focus') sceneId = 'input';
+  if (sceneId === 'panoramic') sceneId = 'review';
+  if (sceneId === 'gallery') sceneId = 'output';
+
+  AppState.activeScene = sceneId;
+  const grid = document.getElementById('modularWorkspaceGrid');
+  grid.className = `modular-grid scene-${sceneId}`;
+
+  document.querySelectorAll('.scene-btn').forEach(b => b.classList.remove('active'));
+  const btnMap = {
+    'input': 'btnSceneInput',
+    'review': 'btnSceneReview',
+    'output': 'btnSceneOutput'
+  };
+  if (btnMap[sceneId]) {
+    const btn = document.getElementById(btnMap[sceneId]);
+    if (btn) btn.classList.add('active');
+  }
+
+  showToast(`已切换工作区场景: [ ${sceneId} ]`);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 4. 意图核对卡批准与事件流终端打字机推进 (R2.2, R2.3)
+ * -------------------------------------------------------------------------
+ */
+function approveIntent(intentId) {
+  if (AppState.intentStatus === 'approved') return;
+  AppState.intentStatus = 'approved';
+
+  const execBtn = document.getElementById('execBtn');
+  execBtn.innerText = '✔ 已批准执行中...';
+  execBtn.classList.remove('p0');
+  execBtn.classList.add('p1');
+  execBtn.style.pointerEvents = 'none';
+  execBtn.style.opacity = '0.7';
+
+  const badge = document.getElementById('intentStateBadge');
+  badge.className = 'badge-capsule success';
+  badge.innerText = '✔ 执行中 (Locked)';
+
+  const footerStatus = document.getElementById('footerExecStatus');
+  if (footerStatus) footerStatus.innerText = '执行中 (Running)';
+
+  showToast('✔ 意图核对已拍板通过！启动 Pi EventStream 事件流总线...');
+
+  const step3Badge = document.getElementById('step3StatusBadge');
+  step3Badge.className = 'badge-capsule accent';
+  step3Badge.innerText = '⚡ 执行推进中...';
+
+  appendTerminalStream();
+}
+
+function appendTerminalStream() {
+  const logBox = document.getElementById('terminalLogs');
+  const liveStatus = document.getElementById('liveStatus');
+  if (liveStatus) liveStatus.remove();
+
+  const lines = [
+    { time: '[13:12:08]', type: 'agent', text: '> Agent: 意图授权已核实，正在对齐 开题PPT逐页文案.md 个人信息段...' },
+    { time: '[13:12:09]', type: 'tool', text: '⚙ [Tool Call] fs.patch_file("开题PPT逐页文案.md", offset: 18) -> +演示用户 +指导教师 (84ms)' },
+    { time: '[13:12:10]', type: 'tool', text: '⚙ [Tool Call] design_tokens.compile("demos/01-design-tokens.html") -> SUCCESS' },
+    { time: '[13:12:11]', type: 'agent', text: '> Agent: 正在挂载 Qwen3.6 防早停深度策略，生成成果画廊与 6 份交付规范...' },
+    { time: '[13:12:12]', type: 'tool', text: '⚙ [Tool Call] git.snapshot_create("#CHK-0904") -> Verified Clean (12ms)' },
+    { time: '[13:12:13]', type: 'success', text: '✔ [Pi Harness] 任务已全部执行完毕！总用时 12.4s · 本地 Token 成本 0 · 交付物已就绪' }
+  ];
+
+  let idx = 0;
+  function streamNext() {
+    if (idx < lines.length) {
+      const item = lines[idx];
+      const row = document.createElement('div');
+      row.className = `term-line ${item.type}`;
+      row.innerHTML = `<span class="time">${item.time}</span><span class="prompt-symbol">$</span><span>${item.text}</span>`;
+      logBox.appendChild(row);
+      logBox.scrollTop = logBox.scrollHeight;
+
+      if (item.type === 'tool') {
+        const sticky = document.getElementById('toolCallingSticky');
+        sticky.innerHTML = `
+          <div class="tool-status-left">
+            <span class="pulse-spinner"></span>
+            <span id="toolCallingName">${item.text}</span>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <span class="badge-capsule dark" id="toolDuration">耗时: 84ms</span>
+            <span class="badge-capsule success" id="toolStatusPill">SUCCESS</span>
+          </div>
+        `;
+      }
+      idx++;
+      setTimeout(streamNext, 450);
+    } else {
+      const step3 = document.getElementById('step-3');
+      step3.className = 'plan-step-row completed';
+      const step3Badge = document.getElementById('step3StatusBadge');
+      step3Badge.className = 'badge-capsule success';
+      step3Badge.innerText = '✓ 执行完成';
+
+      activateDagNode('004');
+
+      const footerStatus = document.getElementById('footerExecStatus');
+      if (footerStatus) footerStatus.innerText = '执行完成 (Ready)';
+
+      showToast('🎉 任务执行已完成！成果已沉淀，可随时回退检查点');
+    }
+  }
+
+  streamNext();
+}
+
+function clearTerminalLogs() {
+  document.getElementById('terminalLogs').innerHTML = `
+    <div class="term-line info"><span class="time">[--:--:--]</span><span class="prompt-symbol">$</span><span>terminal cleared.</span></div>
+  `;
+  showToast('终端显示已清空');
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 5. 会话分支树与时光机回退 (R2.4)
+ * -------------------------------------------------------------------------
+ */
+function activateDagNode(nodeId) {
+  document.querySelectorAll('.dag-node').forEach(n => n.classList.remove('active-head'));
+  const target = document.getElementById(`node-${nodeId}`);
+  if (target) target.classList.add('active-head');
+  AppState.currentNodeId = nodeId;
+
+  const footerNode = document.getElementById('footerNodeStatus');
+  if (footerNode) footerNode.innerText = `#${nodeId}`;
+}
+
+function rewindToNode(nodeId) {
+  activateDagNode(nodeId);
+  const logBox = document.getElementById('terminalLogs');
+
+  if (nodeId === '001') {
+    logBox.innerHTML = `
+      <div class="term-line info"><span class="time">[13:10:01]</span><span class="prompt-symbol">$</span><span>[时光机穿梭] 已回滚至检查点 #001 (初始化扫描态)</span></div>
+      <div class="term-line info"><span class="time">[13:10:02]</span><span class="prompt-symbol">$</span><span>工作区恢复至初态，后续输入将开辟新分支...</span></div>
+    `;
+    resetIntentCardState();
+  } else if (nodeId === '002') {
+    logBox.innerHTML = `
+      <div class="term-line info"><span class="time">[13:12:01]</span><span class="prompt-symbol">$</span><span>[时光机穿梭] 已回滚至检查点 #002 (意图核实批准态)</span></div>
+      <div class="term-line success"><span class="time">[13:12:02]</span><span class="prompt-symbol">$</span><span>方案已核准，等待重新触发推进...</span></div>
+    `;
+  } else if (nodeId === '003') {
+    logBox.innerHTML = `
+      <div class="term-line info"><span class="time">[13:14:01]</span><span class="prompt-symbol">$</span><span>[时光机穿梭] 已切换至当前 HEAD: #003 (局部原子打补丁态)</span></div>
+      <div class="term-line tool"><span class="time">[13:14:02]</span><span class="prompt-symbol">⚙</span><span>个人信息注入已生效 (学生 演示用户 / 指导教师)</span></div>
+    `;
+  } else if (nodeId === '004') {
+    logBox.innerHTML = `
+      <div class="term-line success"><span class="time">[13:15:00]</span><span class="prompt-symbol">$</span><span>[时光机穿梭] 位于检查点 #004 (最终交付物画廊已就绪)</span></div>
+    `;
+  }
+
+  showToast(`已穿梭至检查点 #${nodeId}，后续操作将开辟新分支`);
+}
+
+function resetIntentCardState() {
+  AppState.intentStatus = 'pending';
+  const execBtn = document.getElementById('execBtn');
+  execBtn.innerText = '批准执行 [Enter]';
+  execBtn.className = 'btn-pill p0';
+  execBtn.style.pointerEvents = 'auto';
+  execBtn.style.opacity = '1';
+
+  const badge = document.getElementById('intentStateBadge');
+  badge.className = 'badge-capsule accent';
+  badge.innerText = '● 等待拍板';
+
+  const step3 = document.getElementById('step-3');
+  step3.className = 'plan-step-row active';
+  const step3Badge = document.getElementById('step3StatusBadge');
+  step3Badge.className = 'badge-capsule accent';
+  step3Badge.innerText = '● 准备执行';
+
+  const footerStatus = document.getElementById('footerExecStatus');
+  if (footerStatus) footerStatus.innerText = '等待拍板 (Standby)';
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 6. 一键全流程演示辅助
+ * -------------------------------------------------------------------------
+ */
+function triggerFastDemoLoop() {
+  showToast('🚀 正在执行一键演示闭环...');
+  setScene('input');
+  setTimeout(() => {
+    approveIntent('intent-gd-01');
+  }, 400);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 7. 消融对比弹窗 (Ablation Modal)
+ * -------------------------------------------------------------------------
+ */
+function showAblationModal() {
+  document.getElementById('ablationModal').classList.add('open');
+}
+
+function closeAblationModal() {
+  document.getElementById('ablationModal').classList.remove('open');
+}
+
+document.getElementById('ablationModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeAblationModal();
+  }
+});
+
+/**
+ * -------------------------------------------------------------------------
+ * 8. Toast 轻量提示与全屏辅助
+ * -------------------------------------------------------------------------
+ */
+function showToast(message) {
+  const shelf = document.getElementById('toastShelf');
+  if (!shelf) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.innerHTML = `<span class="status-dot green"></span><span>${message}</span>`;
+  shelf.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 9. 全局键盘快捷键
+ * -------------------------------------------------------------------------
+ */
+window.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  // Enter 批准意图卡
+  if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey) {
+    if (AppState.intentStatus === 'pending') {
+      approveIntent('intent-gd-01');
+    }
+  }
+
+  // Esc 关闭模态窗
+  if (e.key === 'Escape') {
+    closeAblationModal();
+  }
+
+  // Alt+0 ~ Alt+4 秒级页面直达
+  if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    if (e.key === '0') window.location.href = './00-pioneer-workbench.html';
+    if (e.key === '1') window.location.href = './01-bookshelf-workspace.html';
+    if (e.key === '2') window.location.href = './02-session-intent-card.html';
+    if (e.key === '3') window.location.href = './03-wrapup-and-gallery.html';
+    if (e.key === '4') window.location.href = './04-ppt-presentation-demo.html';
+  }
+});
+</script>
+
+</body>
+</html>

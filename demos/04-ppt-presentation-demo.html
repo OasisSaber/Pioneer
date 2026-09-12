@@ -1,0 +1,2417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 04 · 开题答辩演练舞台 · Pioneer Presentation Stage</title>
+<style>
+/* ==========================================================================
+   Apple HIG × Opencode 设计变量系统 (Design Tokens)
+   ========================================================================== */
+:root {
+  /* Apple HIG 浅色基础画布 */
+  --canvas:           #FDFCFC;
+  --surface:          #F5F5F7;
+  --surface-2:        #F8F7F7;
+  --surface-elevated: #FFFFFF;
+
+  /* 墨水文本色 */
+  --ink:              #1D1D1F;
+  --ink-2:            #6E6E73;
+  --ink-3:            #86868B;
+
+  /* 发丝线条规范 */
+  --line:             #E0DEDE;
+  --line-subtle:      #EBEAEA;
+  --line-strong:      #4B4646;
+
+  /* 品牌行动色 (Apple 经典蓝) */
+  --accent:           #0071E3;
+  --accent-2:         #0066CC;
+  --accent-hover:     #0066CC;
+  --accent-light:     #EBF5FF;
+  --accent-focus:     rgba(0, 113, 227, 0.25);
+
+  /* 语义状态色 */
+  --success:          #34C759;
+  --success-bg:       #EBF8EE;
+  --warning:          #FF9500;
+  --warning-bg:       #FFF7EB;
+  --danger:           #FF3B30;
+  --danger-bg:        #FFF2F1;
+
+  /* Opencode 极简暗调终端子系统 */
+  --dark:             #161413;
+  --dark-canvas:      #0E0D0D;
+  --dark-surface:     #161413;
+  --dark-surface-2:   #1E1C1B;
+  --dark-line:        #2E2A29;
+  --dark-line-strong: #3A3635;
+  --on-dark:          #FDFCFC;
+  --on-dark-2:        #8A8585;
+  --on-dark-3:        #5C5756;
+
+  /* 材质与毛玻璃 */
+  --acrylic-light:    rgba(255, 255, 255, 0.88);
+  --acrylic-dark:     rgba(22, 20, 19, 0.88);
+  --glass-border:     rgba(255, 255, 255, 0.12);
+  --drawer-backdrop:  rgba(0, 0, 0, 0.45);
+
+  /* 双轨字体栈 */
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+               "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "Sarasa Gothic SC", "Sarasa Mono SC", "JetBrains Mono",
+               "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ==========================================================================
+   全局重置与 16:9 响应式舞台自适应引擎
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dark-canvas);
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.mono { font-family: var(--font-mono); }
+
+/* 舞台视口居中容器 (消除 1080p 屏幕下的滚动条) */
+.stage-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark-canvas);
+  overflow: hidden;
+}
+
+/* 1920x1080 基准逻辑画布 */
+.stage {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  background: var(--canvas);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  transform-origin: 0 0;
+}
+
+/* ==========================================================================
+   @media print 规范 (无损 10 页 1920x1080 PDF 导出)
+   ========================================================================== */
+@media print {
+  @page {
+    size: 1920px 1080px;
+    margin: 0;
+  }
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  html, body {
+    width: 1920px !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .stage-viewport {
+    position: static !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+  .stage, #mainStage {
+    position: static !important;
+    width: 1920px !important;
+    height: auto !important;
+    transform: none !important;
+    background: none !important;
+    box-shadow: none !important;
+  }
+  .top-nav, .footer-bar, .deck-controller, #pioneerNavHUD, #toastShelf, .help-modal, #modePrototype, .drawer-overlay {
+    display: none !important;
+  }
+  .main-stage-content, #modeDeck, .deck-slides-wrapper {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .slide {
+    position: relative !important;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width: 1920px !important;
+    height: 1080px !important;
+    transform: none !important;
+    break-after: page;
+    page-break-after: always;
+    page-break-inside: avoid;
+    background: var(--canvas) !important;
+  }
+  .slide:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+  .reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0s !important;
+  }
+  .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+
+/* ==========================================================================
+   Header: 顶栏 (Height: 52px)
+   ========================================================================== */
+.top-nav {
+  height: 52px;
+  min-height: 52px;
+  background: var(--acrylic-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  user-select: none;
+  z-index: 100;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.traffic-light.close { background: #FF5F56; }
+.traffic-light.min   { background: #FFBD2E; }
+.traffic-light.max   { background: #27C93F; }
+
+.brand-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.brand-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+}
+.brand-title span { color: var(--accent); }
+
+/* 双模态切换 Tab 组 (Deck Mode vs Prototype Slice Mode) */
+.deck-mode-switcher {
+  display: flex;
+  align-items: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 4px;
+}
+.mode-tab-btn {
+  border: none;
+  background: transparent;
+  padding: 5px 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mode-tab-btn.active {
+  background: var(--surface-elevated);
+  color: var(--ink);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.mode-tab-btn .badge {
+  font-size: 10px;
+  background: var(--accent);
+  color: #fff;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.18s ease;
+  user-select: none;
+  border: 1px solid transparent;
+}
+.btn-pill.p0 {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-pill.p0:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+.btn-pill.p1 {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink-2);
+}
+.btn-pill.p1:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Main Stage Container
+   ========================================================================== */
+.main-stage-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==========================================================================
+   Mode A: 10 页开题汇报 PPT Deck 容器 (#modeDeck)
+   ========================================================================== */
+#modeDeck {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--canvas);
+}
+.deck-slides-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 100%;
+  overflow: hidden;
+  display: block;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: var(--canvas);
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.99);
+}
+.slide.active, .slide.visible {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+  z-index: 10;
+}
+
+/* 动画系统 */
+.reveal {
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity .15s cubic-bezier(.16,1,.3,1), transform .15s cubic-bezier(.16,1,.3,1);
+}
+.slide.active .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+/* ==========================================================================
+   通用 Header / Footer / Card / Pill / Terminal 样式
+   ========================================================================== */
+
+.hdr{position:absolute;top:48px;left:100px;right:100px;display:flex;justify-content:space-between;align-items:center;font-family:var(--font-mono);z-index:2;}
+.hdr .brand{display:flex;align-items:center;gap:14px;}
+.hdr .brand .txt{font-size:20px;color:var(--ink-3);letter-spacing:.5px;}
+.hdr .sec{font-size:18px;color:var(--ink-3);text-align:right;letter-spacing:1px;}
+.logo{display:grid;grid-template-columns:14px 14px;grid-template-rows:14px 14px;gap:5px;}
+.logo i{background:var(--ink);border-radius:2px;}
+.logo i.hi{background:var(--accent);}
+
+.title{position:absolute;left:96px;top:118px;font-family:var(--font-sans);font-size:52px;font-weight:600;letter-spacing:-.5px;color:var(--ink);line-height:1.2;z-index:2;}
+.title .en{font-family:var(--font-mono);font-size:16px;color:var(--ink-3);letter-spacing:2px;font-weight:400;display:block;margin-bottom:6px;}
+
+.ftr{position:absolute;left:100px;right:100px;bottom:0;z-index:2;}
+.ftr .line{height:1px;background:var(--line);}
+.ftr .row{display:flex;justify-content:space-between;align-items:center;padding-top:12px;padding-right:240px;font-family:var(--font-mono);}
+.ftr .r1{font-size:16px;color:var(--ink-3);letter-spacing:.5px;}
+.ftr .r2{font-size:14px;color:var(--ink-3);margin-top:4px;padding-bottom:12px;}
+.ftr .r1 .ac{color:var(--accent);}
+
+/* 卡片 */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;}
+/* 胶囊 pill（Apple HIG 999px） */
+.pill{display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 18px;border-radius:999px;font-family:var(--font-mono);font-size:15px;font-weight:600;letter-spacing:.5px;border:none;}
+.pill.p0{background:var(--accent);color:#fff;}
+.pill.p1{background:var(--canvas);border:1px solid var(--ink-3);color:var(--ink-2);}
+/* 黑色信息块 */
+.dark-block{background:var(--dark);border-radius:8px;color:var(--on-dark);}
+/* 终端行 */
+.term{display:flex;align-items:center;gap:14px;font-family:var(--font-mono);}
+.term .p{color:var(--on-dark-2);font-size:20px;}
+.term .p.ac{color:var(--accent);}
+.term .c{font-size:20px;color:var(--on-dark);flex:1;}
+.copy{flex:0 0 auto;height:30px;padding:0 14px;display:flex;align-items:center;justify-content:center;background:var(--dark-surface);border:1px solid var(--line-strong);border-radius:999px;color:var(--ink-3);font-size:13px;font-family:var(--font-mono);user-select:none;cursor:pointer;}
+
+/* ===== reveal 动画 ===== */
+.reveal{opacity:0;transform:translateY(4px);transition:opacity .15s cubic-bezier(.16,1,.3,1),transform .15s cubic-bezier(.16,1,.3,1);}
+.slide.active .reveal{opacity:1;transform:none;}
+
+/* =========================================================
+   Slide 1 · 封面
+   ========================================================= */
+.s1 .hdr .brand .txt{color:var(--ink);font-size:22px;}
+.s1 .ann{position:absolute;top:104px;left:120px;width:1680px;height:48px;background:var(--surface);border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;gap:14px;padding:0 18px;font-family:var(--font-mono);}
+.s1 .ann .new{flex:0 0 auto;height:28px;padding:0 14px;background:var(--accent);color:#fff;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;letter-spacing:1px;}
+.s1 .ann .t{font-size:17px;color:var(--ink);}
+.s1 .ann .lk{margin-left:auto;font-size:16px;color:var(--accent);font-weight:600;}
+.s1 .lead{position:absolute;left:120px;top:180px;font-size:22px;color:var(--ink-2);font-family:var(--font-sans);}
+.s1 .t1{position:absolute;left:116px;top:222px;font-size:62px;font-weight:700;color:var(--ink);letter-spacing:-1px;line-height:1.15;}
+.s1 .t2{position:absolute;left:116px;top:302px;font-size:62px;font-weight:700;color:var(--ink);letter-spacing:-1px;line-height:1.15;}
+.s1 .t2 .kw{color:var(--accent);}
+.s1 .eng{position:absolute;left:120px;top:406px;font-size:18px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:2px;}
+.s1 .philo-strip{position:absolute;left:120px;top:446px;display:flex;align-items:center;gap:12px;}
+.s1 .philo-capsule{background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 18px;font-family:var(--font-mono);font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;}
+.s1 .philo-capsule b{color:var(--accent);}
+.s1 .hero{position:absolute;left:120px;top:512px;width:1680px;height:240px;padding:24px 30px;display:flex;flex-direction:column;gap:18px;}
+.s1 .screens{display:flex;gap:14px;}
+.s1 .screens .sc{flex:1;height:96px;background:var(--dark-surface);border:1px solid var(--dark-line);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;transition:all .2s;}
+.s1 .screens .sc:hover{border-color:var(--accent);}
+.s1 .screens .sc b{font-size:21px;font-weight:600;color:var(--on-dark);font-family:var(--font-sans);display:flex;align-items:center;gap:8px;}
+.s1 .screens .sc span{font-size:13px;color:var(--on-dark-2);font-family:var(--font-mono);letter-spacing:1px;}
+.s1 .screens .sc .dot{width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block;}
+.s1 .meta{position:absolute;left:120px;top:788px;font-size:21px;color:var(--ink);font-family:var(--font-sans);}
+.s1 .meta .fld{color:var(--ink-3);font-family:var(--font-mono);margin-right:6px;}
+
+/* =========================================================
+   Slide 2 · 选题背景与痛点
+   ========================================================= */
+.s2 .why{position:absolute;left:100px;top:250px;width:760px;display:flex;flex-direction:column;gap:18px;}
+.s2 .why .lbl{font-size:18px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:2px;}
+.s2 .why .tt{font-size:48px;font-weight:700;color:var(--ink);line-height:1.2;letter-spacing:-1px;}
+.s2 .why .tt .kw{color:var(--accent);}
+.s2 .why .bd{font-size:22px;color:var(--ink-2);line-height:1.6;}
+.s2 .pains{position:absolute;left:920px;top:250px;width:900px;display:flex;flex-direction:column;gap:16px;}
+.s2 .pains .p{padding:22px 26px;display:flex;flex-direction:column;gap:8px;}
+.s2 .pains .p b{font-size:23px;font-weight:600;color:var(--ink);}
+.s2 .pains .p b .no{font-family:var(--font-mono);color:var(--accent);margin-right:6px;}
+.s2 .pains .p span{font-size:18px;color:var(--ink-2);line-height:1.5;}
+.s2 .stats{position:absolute;left:100px;top:786px;width:1720px;display:flex;justify-content:space-between;align-items:flex-start;}
+.s2 .stat{display:flex;flex-direction:column;gap:6px;}
+.s2 .stat .num{font-size:68px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-1px;}
+.s2 .stat .num .ac{color:var(--accent);}
+.s2 .stat .lb{font-size:18px;color:var(--ink-3);font-family:var(--font-mono);max-width:480px;line-height:1.4;}
+
+/* =========================================================
+   Slide 3 · 核心理念与设计目标
+   ========================================================= */
+.s3 .philo-banner{position:absolute;left:100px;top:226px;width:1720px;height:44px;background:var(--surface);border:1px solid var(--line);border-radius:999px;display:flex;align-items:center;padding:0 20px;font-size:17px;color:var(--ink);gap:10px;}
+.s3 .philo-banner .tag{background:var(--accent);color:#fff;border-radius:999px;padding:3px 12px;font-size:12px;font-weight:600;font-family:var(--font-mono);}
+.s3 .dual-arch{position:absolute;left:100px;top:286px;width:1720px;display:flex;gap:20px;}
+.s3 .arch-card{flex:1;padding:20px 24px;background:var(--surface);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;gap:10px;}
+.s3 .arch-card .hd{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.s3 .arch-card .hd b{font-size:21px;color:var(--ink);font-weight:700;}
+.s3 .arch-card .hd span{font-family:var(--font-mono);font-size:13px;color:var(--ink-3);}
+.s3 .arch-item{display:flex;flex-direction:column;gap:3px;}
+.s3 .arch-item .t{font-size:16.5px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px;}
+.s3 .arch-item .t .badge{font-family:var(--font-mono);font-size:11px;background:#fff;border:1px solid var(--line);padding:2px 8px;border-radius:999px;color:var(--accent);font-weight:600;}
+.s3 .arch-item .d{font-size:14.5px;color:var(--ink-2);line-height:1.4;}
+.s3 .feats{position:absolute;left:100px;top:574px;width:1720px;display:flex;flex-direction:column;gap:8px;}
+.s3 .feats .lbl{font-size:15px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:1px;}
+.s3 .feat{display:flex;align-items:center;justify-content:space-between;padding:10px 22px;background:#fff;border:1px solid var(--line);border-radius:999px;}
+.s3 .feat .n{font-size:17px;font-weight:600;color:var(--ink);}
+.s3 .feat .n .no{font-family:var(--font-mono);color:var(--accent);margin-right:8px;}
+
+/* =========================================================
+   Slide 4 · 系统整体架构
+   ========================================================= */
+.s4 .pipe-wrap{position:absolute;left:100px;top:236px;width:1720px;display:flex;align-items:center;gap:16px;}
+.s4 .pipe-box{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px 24px;display:flex;flex-direction:column;gap:12px;height:340px;}
+.s4 .pipe-box.center{flex:1.2;background:var(--dark);border-color:var(--dark-line);color:var(--on-dark);}
+.s4 .pipe-box .hd{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:8px;display:flex;justify-content:space-between;}
+.s4 .pipe-box.center .hd{color:var(--on-dark);border-bottom-color:var(--dark-line-strong);}
+.s4 .pipe-box .sub{font-size:13px;color:var(--ink-3);font-family:var(--font-mono);}
+.s4 .pipe-box.center .sub{color:var(--on-dark-2);}
+.s4 .pipe-items{display:flex;flex-direction:column;gap:10px;flex:1;justify-content:center;}
+.s4 .pipe-item{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:flex;flex-direction:column;gap:3px;}
+.s4 .pipe-item b{font-size:15px;color:var(--ink);display:flex;align-items:center;gap:6px;}
+.s4 .pipe-item span{font-size:13px;color:var(--ink-2);line-height:1.35;}
+.s4 .pipe-box.center .pipe-item{background:var(--dark-surface);border-color:var(--dark-line-strong);}
+.s4 .pipe-box.center .pipe-item b{color:var(--on-dark);}
+.s4 .pipe-box.center .pipe-item b .ac{color:var(--accent);}
+.s4 .pipe-box.center .pipe-item span{color:var(--on-dark-2);}
+.s4 .arrow-link{font-family:var(--font-mono);font-size:32px;color:var(--ink-3);user-select:none;}
+.s4 .prin-wrap{position:absolute;left:100px;top:604px;width:1720px;display:flex;flex-direction:column;gap:12px;}
+.s4 .prin-wrap .lbl{font-size:16px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:1px;}
+.s4 .prin-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.s4 .prin-card{padding:18px 22px;background:var(--surface);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;gap:6px;}
+.s4 .prin-card b{font-size:18px;font-weight:600;color:var(--ink);}
+.s4 .prin-card b .no{color:var(--accent);font-family:var(--font-mono);margin-right:6px;}
+.s4 .prin-card span{font-size:15px;color:var(--ink-2);line-height:1.45;}
+.s4 .terminal{position:absolute;left:100px;top:848px;width:1720px;height:52px;padding:0 20px;display:flex;align-items:center;gap:14px;background:var(--dark);border-radius:8px;}
+
+/* =========================================================
+   Slide 5 · 核心原型演示 1 · Jellyfin 海报墙工作区
+   ========================================================= */
+.s5 .demo-wrap{position:absolute;left:100px;top:228px;width:1720px;display:flex;gap:24px;}
+.s5 .shelf-box{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px 26px;display:flex;flex-direction:column;gap:14px;}
+.s5 .shelf-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;}
+.s5 .shelf-top .loc{font-family:var(--font-mono);font-size:15px;color:var(--ink);display:flex;align-items:center;gap:10px;}
+.s5 .shelf-top .loc b{color:var(--accent);}
+.s5 .shelf-filters{display:flex;gap:8px;align-items:center;}
+.s5 .shelf-filter-btn{font-family:var(--font-mono);font-size:12px;padding:4px 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink-2);cursor:pointer;transition:all .15s;}
+.s5 .shelf-filter-btn.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+.s5 .shelf-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.s5 .card-mini{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 15px;display:flex;flex-direction:column;gap:7px;transition:all .2s;}
+.s5 .card-mini:hover{border-color:#B4B4B9;transform:translateY(-2px);}
+.s5 .poster-head{display:flex;justify-content:space-between;align-items:center;background:#EAE9EC;border-radius:6px;padding:3px 8px;font-family:var(--font-mono);font-size:11px;}
+.s5 .poster-head .p-tag{color:var(--accent);font-weight:700;letter-spacing:.5px;}
+.s5 .poster-head .p-meta{display:flex;gap:8px;color:var(--ink-2);}
+.s5 .card-mini .head{display:flex;justify-content:space-between;align-items:flex-start;gap:6px;}
+.s5 .card-mini .tit{font-family:var(--font-mono);font-size:15px;font-weight:700;color:var(--ink);word-break:break-all;}
+.s5 .card-mini .tag{font-family:var(--font-mono);font-size:11px;padding:2px 8px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--ink-2);white-space:nowrap;}
+.s5 .card-mini.dirty{background:#FFFDF8;border-color:#FFD48A;}
+.s5 .card-mini.dirty .poster-head{background:#FFF2D6;}
+.s5 .card-mini.dirty .poster-head .p-tag{color:#C96600;}
+.s5 .card-mini.dirty .tag{background:#FFF5EB;border-color:#FF9500;color:#C96600;}
+.s5 .card-mini .desc{font-size:13px;color:var(--ink-2);line-height:1.45;flex:1;}
+.s5 .card-mini .ft{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:12px;color:var(--ink-3);border-top:1px solid var(--line);padding-top:7px;}
+
+.s5 .drawer-preview{width:560px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 24px;display:flex;flex-direction:column;gap:14px;}
+.s5 .drawer-preview .tit{font-size:20px;font-weight:700;color:var(--ink);}
+.s5 .safe-pill{background:#EBF8EE;border:1px solid #34C759;border-radius:8px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.s5 .safe-pill b{color:#1E7E34;font-size:15px;}
+.s5 .safe-pill p{color:#2D6A4F;font-size:12px;margin-top:2px;}
+.s5 .diff-box{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px;font-family:var(--font-mono);font-size:12px;display:flex;flex-direction:column;gap:8px;line-height:1.4;}
+.s5 .diff-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:11px;font-weight:600;background:#E8F2FF;color:var(--accent);}
+.s5 .feat-bullets{font-size:14.5px;color:var(--ink-2);line-height:1.55;display:flex;flex-direction:column;gap:5px;}
+.s5 .feat-bullets b{color:var(--ink);}
+
+/* =========================================================
+   Slide 6 · 核心原型演示 2 · Premiere Pro 式模块化工作区
+   ========================================================= */
+.s6 .pr-tab-header{position:absolute;left:100px;top:222px;width:1720px;display:flex;flex-direction:column;gap:8px;}
+.s6 .browser-tabs{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-bottom:8px;}
+.s6 .b-tab{padding:6px 16px;border-radius:8px 8px 0 0;font-family:var(--font-mono);font-size:13px;color:var(--ink-2);background:var(--surface);cursor:pointer;border:1px solid var(--line);border-bottom:none;}
+.s6 .b-tab.active{background:#fff;color:var(--ink);font-weight:600;}
+.s6 .workspace-scenarios{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 12px;width:fit-content;}
+.s6 .sc-tab{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);padding:4px 12px;border-radius:999px;cursor:pointer;}
+.s6 .sc-tab.active{background:#fff;color:var(--accent);font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,0.06);}
+
+.s6 .main-layout{position:absolute;left:100px;top:316px;width:1720px;display:flex;gap:20px;height:590px;}
+.s6 .left-col{flex:1.15;display:flex;flex-direction:column;gap:12px;}
+.s6 .user-prompt{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 18px;font-size:15px;font-weight:600;display:flex;align-items:center;gap:10px;font-family:var(--font-mono);}
+.s6 .user-prompt .sym{color:var(--accent);}
+.s6 .intent-box{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;padding:18px 22px;display:flex;flex-direction:column;gap:12px;flex:1;}
+.s6 .intent-box .hd{display:flex;justify-content:space-between;align-items:center;}
+.s6 .intent-box .hd b{font-size:18px;font-weight:700;}
+.s6 .intent-box .hd .pill-mod{font-family:var(--font-mono);font-size:12px;background:#fff;border:1px solid var(--line);padding:2px 10px;border-radius:999px;color:var(--ink-2);}
+.s6 .intent-box .sum{font-size:14px;color:var(--ink-2);line-height:1.45;}
+.s6 .intent-box .steps{display:flex;flex-direction:column;gap:8px;}
+.s6 .intent-box .st-row{background:#fff;border:1px solid var(--line);border-radius:6px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center;font-size:13px;}
+.s6 .intent-box .st-row .n{color:var(--accent);font-family:var(--font-mono);font-weight:700;margin-right:8px;}
+.s6 .intent-box .ops{display:flex;justify-content:space-between;align-items:center;padding-top:6px;margin-top:auto;}
+
+.s6 .hint-bar{background:var(--dark);border:1px solid var(--line-strong);border-radius:8px;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;color:var(--on-dark);font-family:var(--font-mono);font-size:12.5px;}
+.s6 .hint-bar .tag{background:rgba(0,113,227,0.25);color:#5AC8FA;padding:2px 6px;border-radius:4px;border:1px solid var(--accent);font-size:11px;}
+
+.s6 .right-col{flex:0.85;display:flex;flex-direction:column;gap:12px;}
+.s6 .terminal-panel{background:var(--dark);border:1px solid var(--dark-line);border-radius:10px;padding:14px 18px;font-family:var(--font-mono);color:var(--on-dark);font-size:12px;display:flex;flex-direction:column;gap:6px;height:290px;}
+.s6 .terminal-panel .thd{color:var(--on-dark-2);border-bottom:1px solid var(--dark-surface-2);padding-bottom:6px;display:flex;justify-content:space-between;font-size:11px;}
+.s6 .session-tree-panel{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;flex:1;}
+.s6 .session-tree-panel .thd{font-family:var(--font-mono);font-size:13px;font-weight:700;color:var(--ink);border-bottom:1px solid var(--line);padding-bottom:6px;display:flex;justify-content:space-between;}
+.s6 .tree-diagram{font-family:var(--font-mono);font-size:12.5px;color:var(--ink);line-height:1.6;padding:6px 0;}
+.s6 .tree-diagram .node{color:var(--accent);font-weight:600;}
+
+/* =========================================================
+   Slide 7 · 技术与工具
+   ========================================================= */
+.s7 .grid{position:absolute;left:100px;top:236px;width:1720px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.s7 .grid .c{padding:22px 24px;display:flex;flex-direction:column;gap:8px;height:180px;}
+.s7 .grid .c b{font-size:23px;font-weight:600;color:var(--ink);}
+.s7 .grid .c .k{font-size:18px;color:var(--ink);font-family:var(--font-mono);font-weight:600;}
+.s7 .grid .c .d{font-size:16px;color:var(--ink-2);line-height:1.4;}
+.s7 .terminal{position:absolute;left:100px;top:660px;width:1720px;height:52px;padding:0 18px;display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:999px;}
+.s7 .terminal .c{font-size:18px;color:var(--ink);font-family:var(--font-mono);}
+.s7 .terminal .p{color:var(--accent);font-size:18px;font-family:var(--font-mono);}
+.s7 .note{position:absolute;left:100px;top:736px;font-size:20px;color:var(--ink-2);}
+.s7 .note-models{position:absolute;left:100px;top:782px;font-size:20px;color:var(--ink-2);}
+.s7 .note-models b{color:var(--ink);font-family:var(--font-mono);}
+
+/* =========================================================
+   Slide 8 · 项目成果
+   ========================================================= */
+.s8 .grid{position:absolute;left:100px;top:236px;width:1720px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.s8 .grid .c{padding:22px 24px;display:flex;flex-direction:column;gap:6px;height:180px;}
+.s8 .grid .c b{font-size:22px;font-weight:600;color:var(--ink);font-family:var(--font-mono);}
+.s8 .grid .c b .ac{color:var(--accent);}
+.s8 .grid .c .d{font-size:18px;color:var(--ink);line-height:1.35;}
+.s8 .grid .c .n{font-size:15px;color:var(--ink-2);}
+.s8 .eval .lbl{position:absolute;left:100px;top:654px;font-size:18px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:2px;}
+.s8 .metrics{position:absolute;left:100px;top:702px;width:1720px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.s8 .metrics .m{padding:22px 26px;height:140px;display:flex;flex-direction:column;gap:8px;}
+.s8 .metrics .m b{font-size:40px;font-weight:700;color:var(--ink);line-height:1;letter-spacing:-1px;}
+.s8 .metrics .m b .ac{color:var(--accent);}
+.s8 .metrics .m span{font-size:18px;color:var(--ink-2);}
+
+/* =========================================================
+   Slide 9 · 进度安排
+   ========================================================= */
+.s9 .phases{position:absolute;left:100px;top:246px;width:1720px;display:flex;align-items:stretch;}
+.s9 .phases .ph{flex:1;height:164px;padding:22px;display:flex;flex-direction:column;gap:8px;}
+.s9 .phases .ph .w{font-size:18px;color:var(--ink-3);font-family:var(--font-mono);}
+.s9 .phases .ph b{font-size:23px;font-weight:600;color:var(--ink);}
+.s9 .phases .ph span{font-size:16px;color:var(--ink-2);line-height:1.35;}
+.s9 .phases .ph.hi{border-color:var(--accent);background:var(--surface);}
+.s9 .phases .ph.hi .w{color:var(--accent);font-weight:700;}
+.s9 .phases .ar{width:40px;display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--ink-3);font-family:var(--font-mono);user-select:none;}
+.s9 .risk .lbl{position:absolute;left:100px;top:596px;font-size:18px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:2px;}
+.s9 .risks{position:absolute;left:100px;top:644px;width:1720px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.s9 .risks .r{padding:22px 24px;height:188px;display:flex;flex-direction:column;gap:8px;}
+.s9 .risks .r b{font-size:21px;font-weight:600;color:var(--ink);}
+.s9 .risks .r b .no{font-family:var(--font-mono);color:var(--accent);margin-right:6px;}
+.s9 .risks .r span{font-size:17px;color:var(--ink-2);line-height:1.45;}
+
+/* =========================================================
+   Slide 10 · 总结与致谢
+   ========================================================= */
+.s10 .lbl{position:absolute;left:120px;top:236px;font-size:18px;color:var(--ink-3);font-family:var(--font-mono);letter-spacing:2px;}
+.s10 .st{position:absolute;left:116px;font-size:46px;font-weight:700;color:var(--ink);letter-spacing:-1px;}
+.s10 .st1{top:286px;}.s10 .st2{top:354px;}.s10 .st3{top:422px;}
+.s10 .st .kw{color:var(--accent);}
+.s10 .term{position:absolute;left:120px;top:506px;width:1680px;height:196px;padding:26px 30px;display:flex;flex-direction:column;gap:12px;border-radius:8px;}
+.s10 .term .row{font-size:22px;color:var(--on-dark);font-family:var(--font-mono);}
+.s10 .term .row .p{color:var(--accent);}
+.s10 .thx{position:absolute;left:120px;top:776px;width:1680px;text-align:center;font-size:36px;font-weight:600;color:var(--ink);}
+.s10 .thx2{position:absolute;left:120px;top:836px;width:1680px;text-align:center;font-size:22px;color:var(--ink-3);font-family:var(--font-mono);}
+
+
+
+/* 适配 04 顶栏下位置微调 (原 v1 为 1080 全屏，此处顶栏 52px，footer 32px，剩余 996px) */
+.slide .hdr { top: 22px; left: 80px; right: 80px; }
+.slide .title { left: 76px; top: 82px; }
+.slide .ftr { left: 80px; right: 80px; bottom: 54px; }
+
+.s1 .ann { top: 68px; left: 80px; width: 1760px; }
+.s1 .lead { top: 126px; left: 80px; }
+.s1 .t1 { top: 164px; left: 76px; font-size: 56px; }
+.s1 .t2 { top: 236px; left: 76px; font-size: 56px; }
+.s1 .eng { top: 326px; left: 80px; }
+.s1 .philo-strip { top: 366px; left: 80px; }
+.s1 .hero { top: 426px; left: 80px; width: 1760px; height: 230px; }
+.s1 .meta { top: 686px; left: 80px; }
+
+.s2 .why { left: 80px; top: 196px; }
+.s2 .pains { left: 880px; top: 196px; width: 960px; }
+.s2 .stats { left: 80px; top: 710px; width: 1760px; }
+
+.s3 .philo-banner { left: 80px; top: 184px; width: 1760px; }
+.s3 .dual-arch { left: 80px; top: 240px; width: 1760px; }
+.s3 .feats { left: 80px; top: 520px; width: 1760px; }
+
+.s4 .pipe-wrap { left: 80px; top: 186px; width: 1760px; }
+.s4 .prin-wrap { left: 80px; top: 540px; width: 1760px; }
+.s4 .terminal { left: 80px; top: 766px; width: 1760px; }
+
+.s5 .demo-wrap { left: 80px; top: 184px; width: 1760px; }
+
+.s6 .pr-tab-header { left: 80px; top: 176px; width: 1760px; }
+.s6 .main-layout { left: 80px; top: 256px; width: 1760px; height: 530px; }
+
+.s7 .grid { left: 80px; top: 186px; width: 1760px; }
+.s7 .terminal { left: 80px; top: 586px; width: 1760px; }
+.s7 .note { left: 80px; top: 654px; }
+.s7 .note-models { left: 80px; top: 698px; }
+
+.s8 .grid { left: 80px; top: 186px; width: 1760px; }
+.s8 .eval .lbl { left: 80px; top: 580px; }
+.s8 .metrics { left: 80px; top: 624px; width: 1760px; }
+
+.s9 .phases { left: 80px; top: 196px; width: 1760px; }
+.s9 .risk .lbl { left: 80px; top: 520px; }
+.s9 .risks { left: 80px; top: 564px; width: 1760px; }
+
+.s10 .lbl { left: 100px; top: 186px; }
+.s10 .st1 { top: 230px; left: 96px; }
+.s10 .st2 { top: 290px; left: 96px; }
+.s10 .st3 { top: 350px; left: 96px; }
+.s10 .term { left: 100px; top: 430px; width: 1720px; height: 186px; }
+.s10 .thx { left: 100px; top: 650px; width: 1720px; }
+.s10 .thx2 { left: 100px; top: 704px; width: 1720px; }
+
+/* ==========================================================================
+   幻灯片底部浮动导航控制器 (#deckController)
+   ========================================================================== */
+.deck-controller {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-line);
+  padding: 6px 18px;
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  user-select: none;
+}
+.deck-ctrl-btn {
+  background: transparent;
+  border: none;
+  color: var(--on-dark-2);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+.deck-ctrl-btn:hover {
+  color: var(--on-dark);
+  background: var(--dark-surface-2);
+}
+.deck-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.deck-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dark-line-strong);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.deck-dot.active {
+  background: var(--accent);
+  width: 22px;
+  border-radius: 999px;
+}
+.deck-indicator {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--on-dark-2);
+  padding-left: 4px;
+}
+
+/* ==========================================================================
+   Mode B: 交互原型切片态 (#modePrototype)
+   ========================================================================== */
+#modePrototype {
+  position: absolute;
+  inset: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--surface);
+}
+.proto-subbar {
+  height: 44px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 12px;
+}
+.slice-tab-btn {
+  background: none;
+  border: 1px solid transparent;
+  padding: 4px 14px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.slice-tab-btn.active {
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.proto-canvas {
+  flex: 1;
+  overflow: auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.proj-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.18s, border-color 0.18s;
+}
+.proj-card:hover {
+  transform: translateY(-2px);
+  border-color: #B4B4B9;
+}
+.proj-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.proj-name {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.proj-desc {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  flex: 1;
+}
+.proj-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.badge-capsule {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.badge-capsule.accent {
+  background: var(--accent-light);
+  border-color: rgba(0, 113, 227, 0.3);
+  color: var(--accent);
+  font-weight: 600;
+}
+.badge-capsule.success {
+  background: var(--success-bg);
+  border-color: rgba(52, 199, 89, 0.3);
+  color: var(--success);
+}
+.badge-capsule.warning {
+  background: var(--warning-bg);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #B26A00;
+}
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-dot.green { background: var(--success); }
+.status-dot.blue  { background: var(--accent); }
+
+/* 原型切片 2: 意图核对与终端 */
+.intent-card-box {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.intent-steps-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.intent-step-row {
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+}
+.tui-terminal-box {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-line);
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-family: var(--font-mono);
+  color: var(--on-dark);
+  font-size: 12.5px;
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   抽屉组件: 整理刮削提案抽屉 (#cleanupDrawer)
+   ========================================================================== */
+.drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--drawer-backdrop);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: flex-end;
+}
+.drawer-overlay.open { display: flex; }
+.drawer-body-box {
+  width: 640px;
+  height: 100%;
+  background: var(--surface-elevated);
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-overlay.open .drawer-body-box { transform: translateX(0); }
+.drawer-head {
+  height: 56px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+.drawer-head h2 { font-size: 16px; font-weight: 700; color: var(--ink); }
+.drawer-close-btn {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: 18px;
+  transition: all 0.15s;
+}
+.drawer-close-btn:hover { background: rgba(0, 0, 0, 0.08); color: var(--ink); }
+.drawer-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.drawer-foot {
+  height: 64px;
+  padding: 0 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+
+/* ==========================================================================
+   全局底部状态条 (Height: 32px)
+   ========================================================================== */
+.footer-bar {
+  height: 32px;
+  min-height: 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  user-select: none;
+  z-index: 50;
+}
+.footer-bar .highlight { color: var(--ink); font-weight: 600; }
+
+/* ==========================================================================
+   轻量 Toast 提示系统
+   ========================================================================== */
+.toast-shelf {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.toast-msg {
+  background: rgba(22, 20, 19, 0.9);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  animation: toastFade 3s forwards;
+}
+@keyframes toastFade {
+  0% { opacity: 0; transform: translateY(8px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+
+/* ==========================================================================
+   快捷键与答辩 7 问速查弹窗 (#helpModal)
+   ========================================================================== */
+.help-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 10002;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.help-modal.show {
+  display: flex;
+}
+.help-box {
+  background: #1E1C1B;
+  border: 1px solid #3A3635;
+  border-radius: 14px;
+  padding: 28px 32px;
+  width: 860px;
+  max-width: calc(100vw - 40px);
+  max-height: 85vh;
+  overflow-y: auto;
+  color: #FDFCFC;
+  font-family: var(--font-mono);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.help-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #3A3635;
+  padding-bottom: 12px;
+}
+.help-tabs {
+  display: flex;
+  gap: 10px;
+}
+.help-tab-btn {
+  background: transparent;
+  border: 1px solid #3A3635;
+  color: #8A8585;
+  padding: 6px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.help-tab-btn.active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+.help-close-btn {
+  background: transparent;
+  border: none;
+  color: #8A8585;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+.help-close-btn:hover { color: #fff; }
+.help-pane {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+.help-pane.active {
+  display: flex;
+}
+.help-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #ccc;
+  border-bottom: 1px solid #2e2a29;
+  padding-bottom: 8px;
+}
+.help-row kbd {
+  background: #2a2726;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid #4B4646;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+/* 答辩 7 问表格 */
+.qa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  color: #ddd;
+  line-height: 1.5;
+}
+.qa-table th {
+  background: #2a2726;
+  color: var(--accent);
+  padding: 10px 12px;
+  text-align: left;
+  border: 1px solid #3A3635;
+  font-weight: 600;
+}
+.qa-table td {
+  padding: 10px 12px;
+  border: 1px solid #2e2a29;
+  vertical-align: top;
+}
+.qa-table tr:nth-child(even) { background: rgba(255, 255, 255, 0.02); }
+.qa-table td b { color: #fff; }
+</style>
+</head>
+<body>
+
+<div class="stage-viewport">
+  <main class="stage" id="mainStage">
+
+    <!-- ====================================================================
+         Header: 顶栏 (双模态切换与直达主工作台)
+         ==================================================================== -->
+    <header class="top-nav">
+      <div class="header-left">
+        <div class="traffic-lights">
+          <div class="traffic-light close" onclick="showToast('macOS 窗口关闭模拟')" title="关闭"></div>
+          <div class="traffic-light min" onclick="showToast('macOS 窗口最小化模拟')" title="最小化"></div>
+          <div class="traffic-light max" onclick="toggleFullScreen()" title="全屏切换"></div>
+        </div>
+
+        <div class="brand-box">
+          <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <div class="brand-title">PIONEER <span>PRESENTATION</span> · 开题答辩演练舞台</div>
+        </div>
+      </div>
+
+      <!-- 核心双模切换 Tabs -->
+      <div class="deck-mode-switcher">
+        <button class="mode-tab-btn active" id="btnModeDeck" onclick="switchMainMode('deck')">
+          <span>📑 开题答辩幻灯片 (10页 PPT)</span>
+          <span class="badge">演讲态</span>
+        </button>
+        <button class="mode-tab-btn" id="btnModeProto" onclick="switchMainMode('prototype')">
+          <span>⚡ 交互原型切片 (书架/会话)</span>
+          <span class="badge">原型态</span>
+        </button>
+      </div>
+
+      <div class="header-right">
+        <a href="./00-pioneer-workbench.html" class="btn-pill p0" style="font-weight:700;box-shadow:0 2px 10px rgba(0,113,227,0.4);" title="快捷键: Alt+0">
+          🚀 直达 00 一体化主工作台
+        </a>
+        <button class="btn-pill p1" onclick="triggerPrint()" title="快捷键: P (调用系统打印无损导出 PDF)">
+          🖨 导出 PDF
+        </button>
+        <button class="btn-pill p1" onclick="toggleHelpModal()" title="快捷键: ? 或 H (答辩 7 问速答与快捷键)">
+          ? 答辩速查
+        </button>
+        <button class="btn-pill p1" onclick="toggleFullScreen()" title="快捷键: F (切换全屏演示)">
+          ⛶ 全屏演示
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         Main Canvas: 双模态承载区
+         ==================================================================== -->
+    <div class="main-stage-content">
+
+      <!-- ================================================================
+           MODE A: 10 页开题汇报 PPT Deck
+           ================================================================ -->
+      <section id="modeDeck">
+        <div class="deck-slides-wrapper">
+
+<section class="slide s1 active" id="slide-1">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">2027 届毕业设计 · 开题汇报</div>
+  </div>
+  <div class="ann reveal" style="--d:.05s">
+    <span class="new">开题</span>
+    <span class="t">方向五 · 人工智能与数字人 · 大语言模型 / Agent / 交互系统</span>
+    <span class="lk">一切皆 UI →</span>
+  </div>
+  <div class="lead reveal" style="--d:.15s">数字媒体技术专业 · 毕业设计开题汇报</div>
+  <div class="t1 reveal" style="--d:.25s">基于模块化架构的</div>
+  <div class="t2 reveal" style="--d:.35s">桌面任务助理 <span class="kw">Agent</span> 交互系统设计与实现</div>
+  <div class="eng reveal" style="--d:.45s">PIONEER · DESKTOP TASK ASSISTANT AGENT INTERACTIVE SYSTEM</div>
+  <div class="philo-strip reveal" style="--d:.5s">
+    <div class="philo-capsule"><b>Linux:</b> 一切皆文件</div>
+    <div class="philo-capsule"><b>Harness:</b> 一切皆插件</div>
+    <div class="philo-capsule"><b>Pioneer:</b> 一切皆 UI</div>
+  </div>
+  <div class="hero dark-block reveal" style="--d:.55s">
+    <div class="term"><span class="p ac">$</span><span class="c">pioneer --mode=interactive --ui=modular --workspace="D:\Project"</span><span class="copy" onclick="copyCode(this, 'pioneer --mode=interactive --ui=modular --workspace=\&quot;D:\\Project\&quot;', event)">copy</span></div>
+    <div class="screens">
+      <div class="sc"><span class="dot"></span><b>🎬 海报墙</b><span>Jellyfin 影视库 · 工作区管理</span></div>
+      <div class="sc"><span class="dot"></span><b>🎛️ 工作区</b><span>Premiere Pro · 任务执行</span></div>
+      <div class="sc"><span class="dot"></span><b>🛡️ 意图卡</b><span>Intent Card · 核对闸门</span></div>
+      <div class="sc"><span class="dot"></span><b>⚡ 微内核</b><span>Pi-Agent · 流式事件总线</span></div>
+    </div>
+  </div>
+  <div class="meta reveal" style="--d:.65s"><span class="fld">学生</span> 演示用户 &nbsp;&nbsp;&nbsp; <span class="fld">学号</span> 2026000000 &nbsp;&nbsp;&nbsp; <span class="fld">班级</span> 示例班级 &nbsp;&nbsp;&nbsp; <span class="fld">指导教师</span> 指导教师</div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">01/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s2" id="slide-2">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">02 · BACKGROUND</div>
+  </div>
+  <div class="title"><span class="en">WHY · 现有 Agent 三大交互困境</span>选题背景与痛点</div>
+  <div class="why reveal" style="--d:.1s">
+    <div class="lbl">核心诊断</div>
+    <div class="tt">现有 Agent 交互<br>存在<span class="kw">三大困境</span></div>
+    <div class="bd">当前大模型智能体技术飞速发展，但人机交互范式极其滞后。市面产品多局限于客服式聊天框，后台盲跑缺乏透明度，配置深埋于代码与终端中。数媒专业亟需重构一套专业、优雅、高可控的 Agent 桌面交互体系。</div>
+  </div>
+  <div class="pains">
+    <div class="p card reveal" style="--d:.2s"><b><span class="no">[1]</span> 交互模式僵化单一</b><span>市面产品千篇一律为“左侧历史会话 + 中间气泡列表 + 右侧文件预览”，把 Agent 当客服聊天，无法满足复杂工程工作流。</span></div>
+    <div class="p card reveal" style="--d:.3s"><b><span class="no">[2]</span> 状态黑盒与失控感</b><span>终端代码日志滚不到底，Agent“盲跑狂奔”，用户看不懂、不敢信、无法介入，缺乏关键安全确认闸门。</span></div>
+    <div class="p card reveal" style="--d:.4s"><b><span class="no">[3]</span> 功能隐藏与门槛过高</b><span>插件工具、技能配置、参数深埋在代码文件和终端命令行中，普通用户极难驾驭，能力无法直观触达。</span></div>
+  </div>
+  <div class="stats">
+    <div class="stat reveal" style="--d:.5s"><div class="num">90%+</div><div class="lb">90%+ 现有桌面 Agent 采用僵化三栏 Chatbot 模式</div></div>
+    <div class="stat reveal" style="--d:.6s"><div class="num">0</div><div class="lb">现成方案提供专业级“可拼装工作区”与“本地资产自动刮削海报墙”</div></div>
+    <div class="stat reveal" style="--d:.7s"><div class="num">100<span class="ac">%</span></div><div class="lb">“一切皆 UI” 创新突破点 · 实体化直观交互</div></div>
+  </div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">02/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s3" id="slide-3">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">03 · PHILOSOPHY &amp; OBJECTIVES</div>
+  </div>
+  <div class="title"><span class="en">EVERYTHING IS A UI · 系统哲学与双重架构目标</span>核心理念与设计目标</div>
+  <div class="philo-banner reveal" style="--d:.05s">
+    <span class="tag">核心哲学</span>
+    <span><b>“一切皆 UI” (Everything is a UI)</b> —— 拒绝把配置、工具、状态藏在代码和文字后，全部实体化为高可用桌面 UI 组件。</span>
+  </div>
+  <div class="dual-arch reveal" style="--d:.15s">
+    <div class="arch-card">
+      <div class="hd"><b>🎨 前端创新体系 (Frontend UI)</b><span>释放 100% 视觉宽度</span></div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">顶层结构</span> 浏览器级 Tabs 多标签页</div>
+        <div class="d">彻底取缔常驻占用大块横向空间的左侧栏，释放全屏沉浸空间；系统设置 100% 全屏展开。</div>
+      </div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">工作区管理</span> Jellyfin 影视库海报墙</div>
+        <div class="d">本地工作区资产免配置自动刮削，点击卡片秒级新建项目专属工作区 Tab。</div>
+      </div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">任务执行</span> Premiere Pro 模块化工作区</div>
+        <div class="d">顶部工作区场景快速切换条（输入/审阅/输出）+ 自由拖拽编排的可停靠面板组合。</div>
+      </div>
+    </div>
+    <div class="arch-card">
+      <div class="hd"><b>⚙️ 后端底座体系 (Backend Kernel)</b><span>轻量闭环微内核</span></div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">微内核底座</span> Pi-Agent 极简架构</div>
+        <div class="d">Agent Loop 极简调度循环 ⟷ 会话分支树 (Session Tree 时光机) ⟷ 模块化插件库。</div>
+      </div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">通信管道</span> WebSocket / SSE 事件总线</div>
+        <div class="d">全链路细粒度流式事件总线，毫秒级状态同步，驱动流式打字与意图卡。</div>
+      </div>
+      <div class="arch-item">
+        <div class="t"><span class="badge">插件生态</span> 基于 Zod Schema 原子工具</div>
+        <div class="d">极简标准化原子工具规范，纯 TypeScript 类型守卫，一年内渐进扩展。</div>
+      </div>
+    </div>
+  </div>
+  <div class="feats">
+    <div class="lbl reveal" style="--d:.35s">CORE FEATURES &amp; ROADMAP · P0 必做保底 · P1 外延渐进（时间不足先裁 P1）</div>
+    <div class="feat reveal" style="--d:.4s"><span class="n"><span class="no">[1]</span>顶层 Tabs 多标签系统 + Jellyfin 影视库海报墙工作区</span><span class="pill p0">P0</span></div>
+    <div class="feat reveal" style="--d:.5s"><span class="n"><span class="no">[2]</span>Premiere Pro 式模块化执行工作区（预设模板 + 可停靠面板）</span><span class="pill p0">P0</span></div>
+    <div class="feat reveal" style="--d:.6s"><span class="n"><span class="no">[3]</span>意图核对卡（Intent Card，高危操作执行前核对理解与方案）</span><span class="pill p0">P0</span></div>
+    <div class="feat reveal" style="--d:.7s"><span class="n"><span class="no">[4]</span>Pi-Agent 极简底盘与全链路流式事件总线 (Event Stream)</span><span class="pill p0">P0</span></div>
+    <div class="feat reveal" style="--d:.8s"><span class="n"><span class="no">[5]</span>成果画廊与 Diff 审阅 · 极简插件库按需渐进扩展</span><span class="pill p1">P1</span></div>
+  </div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">03/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s4" id="slide-4">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">04 · ARCHITECTURE</div>
+  </div>
+  <div class="title"><span class="en">DATA FLOW &amp; RESTRAINED DESIGN PRINCIPLES</span>系统整体架构</div>
+  <div class="pipe-wrap reveal" style="--d:.1s">
+    <div class="pipe-box">
+      <div class="hd"><span>前端 Pioneer GUI</span><span class="sub">视觉与编排层</span></div>
+      <div class="pipe-items">
+        <div class="pipe-item"><b>🎬 Jellyfin 海报墙</b><span>本地工作区刮削识别与项目卡片导航</span></div>
+        <div class="pipe-item"><b>🎛️ PR 模块化工作区</b><span>顶部场景切换栏 + Dockview 自由可停靠面板</span></div>
+        <div class="pipe-item"><b>🛡️ 意图卡 / 终端 / 画廊</b><span>高危操作核对、流式日志与成果 Diff</span></div>
+      </div>
+    </div>
+    <div class="arrow-link">⟷</div>
+    <div class="pipe-box center">
+      <div class="hd"><span>双向通信管道 (Event Bus)</span><span class="sub">细粒度流式事件协议</span></div>
+      <div class="pipe-items">
+        <div class="pipe-item"><b><span class="ac">⚡ WebSocket / SSE 全链路事件总线</span></b><span>细粒度打字机动画、实时工具调用胶囊推送</span></div>
+        <div class="pipe-item"><b>🔄 双向交互状态机</b><span>意图审批调度、单步控制、取消与自愈重发</span></div>
+        <div class="pipe-item"><b>📦 本地持久化缓存</b><span>工作区元数据刮削、SQLite 会话快照存储</span></div>
+      </div>
+    </div>
+    <div class="arrow-link">⟷</div>
+    <div class="pipe-box">
+      <div class="hd"><span>后端 Pi 引擎</span><span class="sub">调度与微内核层</span></div>
+      <div class="pipe-items">
+        <div class="pipe-item"><b>⚙️ Pi-Agent 调度底座</b><span>Agent Loop 极简微内核循环，高性能调度</span></div>
+        <div class="pipe-item"><b>🌳 会话分支树 (Session Tree)</b><span>时光机回滚机制，历史节点任意分叉穿梭</span></div>
+        <div class="pipe-item"><b>🧩 模块化原子插件库</b><span>基于 Zod Schema 严格类型守卫的扩展插件</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="prin-wrap reveal" style="--d:.25s">
+    <div class="lbl">APPLE HIG 极简克制设计标准 (DESIGN PRINCIPLES)</div>
+    <div class="prin-grid">
+      <div class="prin-card">
+        <b><span class="no">[1]</span> 沉默优先 (Silence by Default)</b>
+        <span>默认不打扰，仅在有明确触发条件或高危操作时浮现；拒绝花哨常驻仪表盘与大屏图表。</span>
+      </div>
+      <div class="prin-card">
+        <b><span class="no">[2]</span> 渐进披露 (Progressive Disclosure)</b>
+        <span>默认呈现最简单行胶囊与执行摘要，深层技术参数与上下文策略通过二级展开平滑提供。</span>
+      </div>
+      <div class="prin-card">
+        <b><span class="no">[3]</span> 证明靠对比 (Proof by Contrast)</b>
+        <span>靠执行前后状态 Diff 对比、方案核对与可回滚验证体现价值，而非堆砌抽象图形。</span>
+      </div>
+    </div>
+  </div>
+  <div class="terminal reveal" style="--d:.4s"><span class="p ac">$</span><span class="c">rule: 任何界面元素出现前须能回答「它凭什么现在出现」· 严格遵循 Apple HIG 单色调点缀</span><span class="copy" onclick="copyCode(this, 'rule: 任何界面元素出现前须能回答「它凭什么现在出现」', event)">copy</span></div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">04/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s5" id="slide-5">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">05 · PROTOTYPE DEMO 1 · POSTER WALL</div>
+  </div>
+  <div class="title"><span class="en">WORKSPACE MANAGEMENT · JELLYFIN POSTER WALL</span>核心原型演示 1 · Jellyfin 海报墙工作区</div>
+  <div class="demo-wrap reveal" style="--d:.1s">
+    <div class="shelf-box">
+      <div class="shelf-top">
+        <div class="loc">工作区：<b>D:\Project</b> <span style="color:var(--ink-3); font-size:13px;">(已自动刮削识别 4 个 Git 仓库 + 2 个工程资产包)</span></div>
+        <div class="shelf-filters">
+          <button class="shelf-filter-btn active" data-filter="all">最近活跃 (6)</button>
+          <button class="shelf-filter-btn" data-filter="archive">归档项目 (2)</button>
+          <button class="shelf-filter-btn" data-filter="dirty">待整理工作区 (1)</button>
+          <a href="../demos/04-ppt-presentation-demo.html" target="_blank" class="pill p0" style="height:32px; font-size:12px; text-decoration:none; margin-left:8px;">⛶ 打开独立演示舞台 ↗</a>
+        </div>
+      </div>
+      <div class="shelf-grid">
+        <div class="card-mini" data-cat="active">
+          <div class="poster-head"><span class="p-tag">🎬 REPO</span><span class="p-meta"><span>10分钟前活跃</span>·<span>18 集 Runbook</span></span></div>
+          <div class="head"><span class="tit">demo-thesis-2027</span><span class="tag">Git 仓库</span></div>
+          <div class="desc">数字媒体技术 2027 届毕业设计开题材料与 Pioneer 核心工程仓库。</div>
+          <div class="ft"><span>React · TS · Markdown</span><span style="color:var(--accent);">进入工作区 →</span></div>
+        </div>
+        <div class="card-mini" data-cat="active">
+          <div class="poster-head"><span class="p-tag">🎬 CORE</span><span class="p-meta"><span>1小时前活跃</span>·<span>12 集 Runbook</span></span></div>
+          <div class="head"><span class="tit">pioneer-core-runtime</span><span class="tag">Git 仓库</span></div>
+          <div class="desc">Pi-Agent 极简微内核运行时，调度循环与全链路流式事件总线。</div>
+          <div class="ft"><span>Node.js · TS Harness</span><span style="color:var(--accent);">进入工作区 →</span></div>
+        </div>
+        <div class="card-mini" data-cat="active">
+          <div class="poster-head"><span class="p-tag">🎬 UI</span><span class="p-meta"><span>昨天活跃</span>·<span>9 集 Runbook</span></span></div>
+          <div class="head"><span class="tit">dockview-workspace-ui</span><span class="tag">Git 仓库</span></div>
+          <div class="desc">Premiere Pro 风格可停靠面板布局引擎与场景模板管理器。</div>
+          <div class="ft"><span>Dockview · Tailwind</span><span style="color:var(--accent);">进入工作区 →</span></div>
+        </div>
+        <div class="card-mini" data-cat="active archive">
+          <div class="poster-head"><span class="p-tag">🎬 TOOLS</span><span class="p-meta"><span>3天前活跃</span>·<span>6 集 Runbook</span></span></div>
+          <div class="head"><span class="tit">local-zod-plugins</span><span class="tag">Git 仓库</span></div>
+          <div class="desc">基于 Zod 规范的本地文件操作与工程资产刮削原子插件库。</div>
+          <div class="ft"><span>TypeScript · Zod</span><span style="color:var(--accent);">进入工作区 →</span></div>
+        </div>
+        <div class="card-mini" data-cat="archive">
+          <div class="poster-head"><span class="p-tag">📦 ASSETS</span><span class="p-meta"><span>1周前活跃</span>·<span>3 节记录</span></span></div>
+          <div class="head"><span class="tit">3D-Assets-Blender-Pack</span><span class="tag">资产包 · 4.2GB</span></div>
+          <div class="desc">开题汇报三维演示模型、材质贴图包与展演预渲染视频素材。</div>
+          <div class="ft"><span>Blender · GLTF</span><span style="color:var(--ink-2);">查看资产 →</span></div>
+        </div>
+        <div class="card-mini dirty" data-cat="dirty">
+          <div class="poster-head"><span class="p-tag">⚡ SCRAPS</span><span class="p-meta"><span>刚刚扫描</span>·<span>待提炼</span></span></div>
+          <div class="head"><span class="tit">tmp-thesis-scraps</span><span class="tag">需整理归组 (14项)</span></div>
+          <div class="desc">散落的答辩录音、文献截屏草稿与临时文档，待安全归组。</div>
+          <div class="ft"><span>未追踪 · 142 MB</span><span style="color:#C96600; font-weight:600;">建议整理 ⚡</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-preview">
+      <div class="tit">整理闸门 · 资产重组提案</div>
+      <div class="safe-pill">
+        <span style="font-size:20px;">🛡️</span>
+        <div><b>100% 整体可回滚 · 零误删承诺</b><p>所有改动通过 Git 变更分支快照记录，若不满意可一键撤销恢复</p></div>
+      </div>
+      <div class="diff-box">
+        <div><span class="diff-tag">[自动归组]</span> 开题答辩录音.m4a ➜ docs/audio/开题录音.m4a</div>
+        <div><span class="diff-tag">[重命名规范]</span> 截图 2026-09-02.png ➜ docs/assets/pioneer-arch.png</div>
+        <div><span class="diff-tag">[文献归档]</span> 往届开题参考.docx ➜ docs/references/参考.docx</div>
+      </div>
+      <div class="feat-bullets">
+        <div><b>• 零感知刮削：</b> 打开即见资产全貌，从 Git/README 自动识别，免手动繁琐配置</div>
+        <div><b>• 提案式交互：</b> 仅提供 Diff 预览与复选框审批，绝不自作主张删改磁盘</div>
+        <div><b>• 极简克制美学：</b> 1px 发丝线与 Apple HIG 暖白底色，拒绝花哨仪表盘</div>
+      </div>
+    </div>
+  </div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">05/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s6" id="slide-6">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">06 · PROTOTYPE DEMO 2 · PR WORKSPACE</div>
+  </div>
+  <div class="title"><span class="en">EXECUTION WORKSPACE · PREMIERE PRO DOCKABLE PANELS</span>核心原型演示 2 · Premiere Pro 式模块化工作区</div>
+  
+  <div class="pr-tab-header reveal" style="--d:.05s">
+    <div class="browser-tabs">
+      <div class="b-tab">🎬 媒体库主页</div>
+      <div class="b-tab active">📦 demo-thesis-2027</div>
+      <div class="b-tab">⚙️ 系统设置</div>
+      <div class="b-tab" style="padding:6px 10px;">+</div>
+    </div>
+    <div class="workspace-scenarios">
+      <div class="sc-tab">输入</div>
+      <div class="sc-tab active">审阅 (Active)</div>
+      <div class="sc-tab">输出</div>
+      <div class="sc-tab">+ 自定义</div>
+    </div>
+  </div>
+
+  <div class="main-layout reveal" style="--d:.15s">
+    <div class="left-col">
+      <div class="user-prompt">
+        <span class="sym">$</span>
+        <span>agent "整理 demo-thesis-2027 开题材料并生成可停靠面板视口"</span>
+      </div>
+      <div class="intent-box">
+        <div class="hd">
+          <b>意图核对卡 · 任务执行方案确认</b>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="pill-risk" style="background:#FFF2F1; border:1px solid #FF3B30; color:#D70015; font-family:var(--font-mono); font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600;">风险等级: 中 (写磁盘 · 100% 可回退)</span>
+            <span class="pill-mod">当前模型: DeepSeek-V3 / Qwen3.6</span>
+          </div>
+        </div>
+        <div class="sum">识别目标：自动化工作区规整与多面板交互编排。在改动磁盘前，先与您核对执行方案：</div>
+        <div class="steps">
+          <div class="st-row"><div><span class="n">01</span><span>解析工作区目录，对 14 项散落文件生成 Diff 归组提案</span></div><span style="font-family:var(--font-mono); color:var(--ink-3);">已就绪</span></div>
+          <div class="st-row"><div><span class="n">02</span><span>载入 Dockview 布局引擎，编排意图卡与事件流终端面板</span></div><span style="font-family:var(--font-mono); color:var(--accent); font-weight:600;">布局就绪</span></div>
+          <div class="st-row"><div><span class="n">03</span><span>挂载 Pi-Agent 事件总线，执行安全变更并创建回退快照</span></div><span id="intentStep3Status" style="font-family:var(--font-mono); color:var(--ink-3);">待批准</span></div>
+        </div>
+        <div class="ops">
+          <span style="font-family:var(--font-mono); font-size:12px; color:var(--ink-3);">快捷键: <kbd style="border:1px solid #ccc; padding:2px 6px; border-radius:4px; background:#fff;">Enter</kbd> 批准执行 · <kbd style="border:1px solid #ccc; padding:2px 6px; border-radius:4px; background:#fff;">E</kbd> 修改方案 · <kbd style="border:1px solid #ccc; padding:2px 6px; border-radius:4px; background:#fff;">Esc</kbd> 取消</span>
+          <div style="display:flex; gap:10px;">
+            <span class="pill" id="modifyPlanBtn" style="height:32px; font-size:12px; background:var(--canvas); border:1px solid var(--line); cursor:pointer;">修改方案</span>
+            <span class="pill" id="approveIntentBtn" style="height:32px; font-size:12px; background:var(--accent); color:#fff; cursor:pointer;">✔ 批准执行 [Enter]</span>
+          </div>
+        </div>
+      </div>
+      <div class="hint-bar">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span class="tag">Pi 微内核</span>
+          <span id="intentHintMsg">$ [安全闸门] 检测到高危写磁盘操作，已触发「意图核对闸门」保护机制</span>
+        </div>
+        <span id="viewRuleBtn" style="color:var(--accent); text-decoration:underline; font-size:12px; cursor:pointer;">查看规则 ▾</span>
+      </div>
+    </div>
+
+    <div class="right-col">
+      <div class="terminal-panel">
+        <div class="thd"><span>PI EVENT STREAM TERMINAL · PID: 9481</span><span>STATUS: STREAMING</span></div>
+        <div><span style="color:var(--accent);">$</span> pi-agent --workspace="demo-thesis-2027" --interactive</div>
+        <div style="color:var(--on-dark-2);">[00:15:02] Event: session_start (id: pioneer-session-01)</div>
+        <div style="color:#5AC8FA;">[00:15:03] Stream: tool_call -> disk_inspect (path: D:\Project)</div>
+        <div style="color:var(--on-dark-2);">[00:15:04] Gate: intent_card_prompted -> waiting user confirmation...</div>
+        <div style="color:#34C759;">[00:15:05] User approved -> executing safely with snapshot rollback</div>
+        <div style="color:var(--on-dark-2);">[00:15:06] ✔ All tasks completed with 100% rollback guarantee.</div>
+      </div>
+
+      <div class="session-tree-panel">
+        <div class="thd"><span>SESSION TREE · 会话分支与时光机</span><span style="color:var(--accent); font-size:11px;">2 个检查点</span></div>
+        <div class="tree-diagram">
+          <div><span class="node">●</span> 节点 01 (Init: 会话初始化) ──┬── ○ 分支 A (自动归档 · 快照 1)</div>
+          <div style="padding-left:174px;">└── <span class="node">●</span> 分支 B (模块化重构 · 当前活跃) ── ○ 导出定稿</div>
+        </div>
+        <div style="font-size:12px; color:var(--ink-2); line-height:1.45; border-top:1px solid var(--line); padding-top:8px;">
+          <b>解决痛点：</b> 告别死板三栏聊天框，按需自由拖拽拼装与场景化工作流，掌控权彻底归还用户。
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">06/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s7" id="slide-7">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">07 · TECH &amp; TOOLS</div>
+  </div>
+  <div class="title"><span class="en">MODERN LIGHTWEIGHT TECH STACK · 现代化轻量技术栈</span>技术与工具</div>
+  <div class="grid">
+    <div class="c card reveal" style="--d:.1s"><b>前端交互层</b><span class="k">React + TypeScript + TailwindCSS + Dockview</span><span class="d">可停靠面板引擎，16:9 响应式视口，Tailwind 发丝线。</span></div>
+    <div class="c card reveal" style="--d:.2s"><b>底座运行时</b><span class="k">Pi-Agent 微内核</span><span class="d">开源极简调度循环，全链路事件总线与会话分支树原生支持。</span></div>
+    <div class="c card reveal" style="--d:.3s"><b>插件扩展系统</b><span class="k">基于 Zod Schema</span><span class="d">极简原子工具规范，纯 TypeScript 类型守卫与严格参数校验。</span></div>
+    <div class="c card reveal" style="--d:.4s"><b>通信机制</b><span class="k">WebSocket / SSE</span><span class="d">细粒度双向流式事件协议，毫秒级推送终端与意图核对卡。</span></div>
+    <div class="c card reveal" style="--d:.5s"><b>本地存储</b><span class="k">文件系统 / SQLite</span><span class="d">工作区资产免配置自动刮削，会话元数据与快照历史持久化。</span></div>
+    <div class="c card reveal" style="--d:.6s"><b>模型适配</b><span class="k">DeepSeek / Claude / Qwen</span><span class="d">支持主流云端与本地大模型灵活接入，离线亦可运行，杜绝锁死。</span></div>
+  </div>
+  <div class="terminal reveal" style="--d:.7s"><span class="p">$</span><span class="c">pioneer --ui=dockview --engine=pi-agent --tools=zod-atomic --stream=sse --local</span><span class="copy" onclick="copyCode(this, 'pioneer --ui=dockview --engine=pi-agent --tools=zod-atomic --stream=sse --local', event)">copy</span></div>
+  <div class="note reveal" style="--d:.8s">选型原则：前端高度创新 · 后端极简扎实 · 系统独立闭环 · 拒绝死板三栏聊天框。</div>
+  <div class="note-models reveal" style="--d:.85s">支持模型：<b>DeepSeek-V3 / R1</b> · <b>Claude 3.7 Sonnet</b> · 本地 <b>Qwen3.6-27B / 35B</b> —— 离线自适应，无需云端</div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">07/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s8" id="slide-8">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">08 · DELIVERABLES &amp; METRICS</div>
+  </div>
+  <div class="title"><span class="en">SIX DELIVERABLES &amp; THREE ACCEPTANCE CRITERIA</span>项目成果</div>
+  <div class="grid">
+    <div class="c card reveal" style="--d:.1s"><b><span class="ac">demo/</span> 系统原型</b><span class="d">Jellyfin 海报墙 + PR 模块化工作区可运行系统</span><span class="n">开箱即用 · 离线可跑</span></div>
+    <div class="c card reveal" style="--d:.2s"><b><span class="ac">spec/</span> 设计规范</b><span class="d">完整 Pioneer 前端设计系统规范库（Tokens、组件库）</span><span class="n">Apple HIG 规范落地</span></div>
+    <div class="c card reveal" style="--d:.3s"><b><span class="ac">plugin/</span> 极简插件</b><span class="d">核心本地文件/工程管理极简插件库（基于 Zod 规范）</span><span class="n">标准化工具接口</span></div>
+    <div class="c card reveal" style="--d:.4s"><b><span class="ac">video/</span> 演示视频</b><span class="d">高保真交互演示视频、多场景切换录屏与展演素材</span><span class="n">答辩展演备用</span></div>
+    <div class="c card reveal" style="--d:.5s"><b><span class="ac">paper/</span> 毕业论文</b><span class="d">毕业设计全套学术过程材料（开题/中期/论文）</span><span class="n">扎实学术支撑</span></div>
+    <div class="c card reveal" style="--d:.6s"><b><span class="ac">src/</span> 源码归档</b><span class="d">前端交互系统与后端 Pi 极简调度底座完整源代码</span><span class="n">规范工程交付</span></div>
+  </div>
+  <div class="eval"><div class="lbl reveal" style="--d:.7s">EVALUATION · 三大验收指标</div></div>
+  <div class="metrics">
+    <div class="m card reveal" style="--d:.8s"><b>100<span class="ac">%</span></b><span>界面遵循 Pioneer“一切皆 UI”与 Apple HIG 克制原则</span></div>
+    <div class="m card reveal" style="--d:.85s"><b>100<span class="ac">%</span></b><span>磁盘改动支持意图核对与安全回退</span></div>
+    <div class="m card reveal" style="--d:.9s"><b><span class="ac">≥4 个</span></b><span>≥4 个 开箱即用的预设专业工作区模板（书架/执行/审阅/全景）</span></div>
+  </div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">08/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s9" id="slide-9">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">09 · TIMELINE &amp; MILESTONES · 锚定 2027-06 毕业</div>
+  </div>
+  <div class="title"><span class="en">GRADUAL TIMELINE · 一年渐进式时间线</span>进度安排</div>
+  <div class="phases">
+    <div class="ph card hi reveal" style="--d:.1s"><span class="w">09–10</span><b>定题开题</b><span>课题确立、架构定稿与开题汇报</span></div>
+    <div class="ar">&gt;</div>
+    <div class="ph card reveal" style="--d:.2s"><span class="w">10–12</span><b>前端骨架</b><span>Jellyfin 海报墙 + PR 工作区框架</span></div>
+    <div class="ar">&gt;</div>
+    <div class="ph card reveal" style="--d:.3s"><span class="w">12–02</span><b>底盘桥接</b><span>Pi 底盘桥接、事件流与意图核对卡</span></div>
+    <div class="ar">&gt;</div>
+    <div class="ph card reveal" style="--d:.4s"><span class="w">02–03</span><b>功能扩充</b><span>极简插件库扩充、联调与论文初稿</span></div>
+    <div class="ar">&gt;</div>
+    <div class="ph card reveal" style="--d:.5s"><span class="w">04–05</span><b>答辩收尾</b><span>答辩预演、成果归档与预留缓冲期</span></div>
+  </div>
+  <div class="risk"><div class="lbl reveal" style="--d:.6s">KEY RISKS &amp; STRATEGIES · 风险防范策略（框架先立、功能渐进）</div></div>
+  <div class="risks">
+    <div class="r card reveal" style="--d:.7s"><b><span class="no">[1]</span> 进度风险防范</b><span>核心交互界面与框架前置落地，每 4–6 周产出一个可运行里程碑，平稳推进。</span></div>
+    <div class="r card reveal" style="--d:.8s"><b><span class="no">[2]</span> 范围蔓延防范</b><span>严格划分 P0/P1，P0 核心坚决保底，功能插件库按需渐进扩充，时间紧张先裁 P1。</span></div>
+    <div class="r card reveal" style="--d:.9s"><b><span class="no">[3]</span> 技术解耦护航</b><span>前后端通过全链路流式事件总线解耦，模型与工具独立可测，降低跨端联调风险。</span></div>
+  </div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">09/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+<section class="slide s10" id="slide-10">
+  <div class="hdr">
+    <div class="brand"><div class="logo"><i class="hi"></i><i></i><i></i><i></i></div><span class="txt">thesis/pioneer</span></div>
+    <div class="sec">10 · SUMMARY &amp; THANKS</div>
+  </div>
+  <div class="lbl reveal" style="--d:.05s">SUMMARY / 核心主旨收束</div>
+  <div class="st st1 reveal" style="--d:.15s">Linux: <span class="kw">一切皆文件</span> —— 硬件与数据的统一抽象</div>
+  <div class="st st2 reveal" style="--d:.25s">Harness: <span class="kw">一切皆插件</span> —— 模型与运行时的调用解耦</div>
+  <div class="st st3 reveal" style="--d:.35s">Pioneer: <span class="kw">一切皆 UI</span> —— 人类认知与智能体协同的新范式</div>
+  <div class="term dark-block reveal" style="--d:.45s">
+    <div class="row"><span class="p">$</span>&nbsp;课题:&nbsp;&nbsp;基于模块化架构的桌面任务助理 Agent 交互系统设计与实现</div>
+    <div class="row"><span class="p">$</span>&nbsp;创新:&nbsp;&nbsp;Jellyfin 影视库海报墙 + Premiere Pro 模块化工作区</div>
+    <div class="row"><span class="p">$</span>&nbsp;交付:&nbsp;&nbsp;可运行原型 · 设计规范 · 极简插件库 · 演示视频 · 毕业论文</div>
+  </div>
+  <div class="thx reveal" style="--d:.55s">感谢各位老师的指导与聆听</div>
+  <div class="thx2 reveal" style="--d:.65s">恳请批评指正！</div>
+  <div class="ftr"><div class="line"></div>
+    <div class="row"><span class="r1">Pioneer · React+TS+Dockview · Pi-Agent · 一切皆 UI</span><span class="r1">10/10</span></div>
+    <div class="r2">2027 届毕业设计 · 桌面任务助理 Agent 交互系统 · 演示用户</div>
+  </div>
+</section>
+
+        </div>
+
+        <!-- 幻灯片底部浮动导航控制器 -->
+        <div class="deck-controller">
+          <button class="deck-ctrl-btn" id="deckPrevBtn" onclick="changeSlide(currentSlide - 1)">‹ 上一页</button>
+          <div class="deck-dots" id="deckDots">
+            <div class="deck-dot active" onclick="changeSlide(0)"></div>
+            <div class="deck-dot" onclick="changeSlide(1)"></div>
+            <div class="deck-dot" onclick="changeSlide(2)"></div>
+            <div class="deck-dot" onclick="changeSlide(3)"></div>
+            <div class="deck-dot" onclick="changeSlide(4)"></div>
+            <div class="deck-dot" onclick="changeSlide(5)"></div>
+            <div class="deck-dot" onclick="changeSlide(6)"></div>
+            <div class="deck-dot" onclick="changeSlide(7)"></div>
+            <div class="deck-dot" onclick="changeSlide(8)"></div>
+            <div class="deck-dot" onclick="changeSlide(9)"></div>
+          </div>
+          <span class="deck-indicator" id="deckPageIndicator">01 / 10</span>
+          <button class="deck-ctrl-btn" id="deckNextBtn" onclick="changeSlide(currentSlide + 1)">下一页 ›</button>
+          <button class="deck-ctrl-btn" onclick="toggleHelpModal()" style="margin-left:8px;" title="快捷键: ? 或 H">? 答辩速查</button>
+        </div>
+      </section>
+
+      <!-- ================================================================
+           MODE B: 交互原型切片态 (#modePrototype)
+           ================================================================ -->
+      <section id="modePrototype">
+        <div class="proto-subbar">
+          <button class="slice-tab-btn active" id="btnSlice1" onclick="switchSlice(1)">
+            Surface 1 · GUI 影视海报墙工作区 (Jellyfin 风格)
+          </button>
+          <button class="slice-tab-btn" id="btnSlice2" onclick="switchSlice(2)">
+            Surface 2 · 模块化执行工作区与意图核对 (Premiere Pro 风格)
+          </button>
+          <span class="badge-capsule success" style="margin-left:auto;">
+            <span class="status-dot green"></span>
+            Pi-Agent 微内核运行时就绪
+          </span>
+        </div>
+
+        <div class="proto-canvas">
+
+          <!-- 切片 1: GUI 书架与海报墙 -->
+          <div id="slicePanel1">
+            <div class="shelf-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+              <div>
+                <h2 style="font-size:20px;font-weight:700;color:var(--ink);">本地工作区 · Jellyfin 资产海报墙 (D:\Project)</h2>
+                <p style="font-size:13px;color:var(--ink-2);margin-top:2px;">已自动识别并刮削 6 个本地目录 · 4 个活跃 Git 仓库 · 2 个待整理资产区</p>
+              </div>
+              <button class="btn-pill p0" onclick="openDrawer('cleanup')">
+                ⚡ 整理刮削提案 (Diff 抽屉)
+              </button>
+            </div>
+
+            <div class="shelf-grid">
+              <div class="proj-card">
+                <div class="proj-card-top">
+                  <div class="proj-name">demo-thesis-2027</div>
+                  <span class="badge-capsule accent">main · 18 集 Runbook</span>
+                </div>
+                <div class="proj-desc">数字媒体技术 2027 届毕业设计开题材料与 Pioneer 核心工程仓库，全套规范对齐。</div>
+                <div class="proj-foot">
+                  <span>React · TS · Markdown</span>
+                  <span style="color:var(--accent);cursor:pointer;font-weight:600;" onclick="switchSlice(2)">进入执行会话 →</span>
+                </div>
+              </div>
+
+              <div class="proj-card">
+                <div class="proj-card-top">
+                  <div class="proj-name">pioneer-core-runtime</div>
+                  <span class="badge-capsule success">微内核活跃 · 12 集</span>
+                </div>
+                <div class="proj-desc">Pi-Agent 极简微内核调度循环，全链路流式事件总线与会话分支时光机支持。</div>
+                <div class="proj-foot">
+                  <span>Node.js · TS Harness</span>
+                  <span style="color:var(--ink-3);">后台守护运行</span>
+                </div>
+              </div>
+
+              <div class="proj-card">
+                <div class="proj-card-top">
+                  <div class="proj-name">dockview-workspace-ui</div>
+                  <span class="badge-capsule">PR 模块化 · 9 集</span>
+                </div>
+                <div class="proj-desc">Premiere Pro 风格可停靠面板布局引擎与场景模板管理器（输入/审阅/输出）。</div>
+                <div class="proj-foot">
+                  <span>Dockview · Tailwind</span>
+                  <span style="color:var(--accent);cursor:pointer;" onclick="showToast('已载入可停靠面板场景引擎')">查看布局 →</span>
+                </div>
+              </div>
+
+              <div class="proj-card" style="border-color:#FF9500;">
+                <div class="proj-card-top">
+                  <div class="proj-name">tmp-thesis-scraps</div>
+                  <span class="badge-capsule warning">需整理归组 (14项)</span>
+                </div>
+                <div class="proj-desc">散落的参考文献截屏、答辩录音草稿与临时文档，建议整理闸门安全处理。</div>
+                <div class="proj-foot">
+                  <span>未追踪 · 142 MB</span>
+                  <span style="color:#B26A00;font-weight:600;cursor:pointer;" onclick="openDrawer('cleanup')">建议整理 ⚡</span>
+                </div>
+              </div>
+
+              <div class="proj-card">
+                <div class="proj-card-top">
+                  <div class="proj-name">local-zod-plugins</div>
+                  <span class="badge-capsule">原子插件库 · 6 集</span>
+                </div>
+                <div class="proj-desc">基于 Zod Schema 规范的本地文件操作与工程资产刮削原子插件库，纯 TS 类型守卫。</div>
+                <div class="proj-foot">
+                  <span>TypeScript · Zod</span>
+                  <span style="color:var(--ink-3);">插件契约生效</span>
+                </div>
+              </div>
+
+              <div class="proj-card">
+                <div class="proj-card-top">
+                  <div class="proj-name">3D-Assets-Blender-Pack</div>
+                  <span class="badge-capsule">资产包 · 4.2GB</span>
+                </div>
+                <div class="proj-desc">开题汇报三维演示模型、材质贴图包与展演预渲染视频素材，本地优先免上云。</div>
+                <div class="proj-foot">
+                  <span>Blender · GLTF</span>
+                  <span style="color:var(--accent);cursor:pointer;" onclick="showToast('已扫描 3D 资产元数据')">查看资产 →</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 切片 2: 意图核对与终端会话 -->
+          <div id="slicePanel2" style="display:none;flex-direction:column;gap:18px;">
+            <div style="background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 20px;font-family:var(--font-mono);font-size:14px;font-weight:600;">
+              <span style="color:var(--accent);">$</span> agent "整理 demo-thesis-2027 开题材料并挂载可停靠面板视口"
+            </div>
+
+            <div class="intent-card-box">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 style="font-size:18px;font-weight:700;">意图核对卡 · 任务执行方案确认</h3>
+                <span class="badge-capsule accent">风险等级: 中 (写磁盘 · 100% 可回退)</span>
+              </div>
+              <p style="font-size:13.5px;color:var(--ink-2);line-height:1.5;">
+                识别目标：自动化工作区规整与多面板交互编排。在改动磁盘前，先与您核对执行方案：
+              </p>
+              <div class="intent-steps-box">
+                <div class="intent-step-row">
+                  <div><b style="color:var(--accent);margin-right:6px;">01.</b> 解析工作区目录，对 14 项散落文件生成 Diff 归组提案</div>
+                  <span style="color:var(--ink-3);font-family:var(--font-mono);">已就绪</span>
+                </div>
+                <div class="intent-step-row">
+                  <div><b style="color:var(--accent);margin-right:6px;">02.</b> 载入 Dockview 布局引擎，编排意图卡与事件流终端面板</div>
+                  <span style="color:var(--accent);font-family:var(--font-mono);font-weight:600;">布局就绪</span>
+                </div>
+                <div class="intent-step-row">
+                  <div><b style="color:var(--accent);margin-right:6px;">03.</b> 挂载 Pi-Agent 事件总线，执行安全变更并创建回退快照</div>
+                  <span style="color:var(--ink-3);font-family:var(--font-mono);">待批准</span>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding-top:4px;">
+                <span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3);">
+                  快捷键: <kbd style="border:1px solid #ccc;padding:2px 6px;border-radius:4px;background:#fff;">Enter</kbd> 批准执行 · <kbd style="border:1px solid #ccc;padding:2px 6px;border-radius:4px;background:#fff;">Esc</kbd> 取消
+                </span>
+                <div style="display:flex;gap:10px;">
+                  <button class="btn-pill p1" onclick="showToast('已进入微调方案编辑模式')">修改方案</button>
+                  <button class="btn-pill p0" onclick="approveIntent()">✔ 批准执行 [Enter]</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tui-terminal-box">
+              <div style="color:var(--on-dark-2);border-bottom:1px solid var(--dark-line);padding-bottom:6px;display:flex;justify-content:space-between;font-size:11px;">
+                <span>PI EVENT STREAM TERMINAL · PID: 9481</span>
+                <span>STATUS: STREAMING</span>
+              </div>
+              <div><span style="color:var(--accent);">$</span> pi-agent --workspace="demo-thesis-2027" --interactive</div>
+              <div style="color:var(--on-dark-2);">[00:15:02] Event: session_start (id: pioneer-session-01)</div>
+              <div style="color:#5AC8FA;">[00:15:03] Stream: tool_call -&gt; disk_inspect (path: D:\Project) (12ms)</div>
+              <div style="color:var(--on-dark-2);">[00:15:04] Gate: intent_card_prompted -&gt; waiting user confirmation...</div>
+              <div style="color:#34C759;">[00:15:05] User approved -&gt; executing safely with snapshot rollback</div>
+              <div style="color:var(--on-dark-2);">[00:15:06] ✔ All tasks completed with 100% rollback guarantee.</div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
+    <!-- ====================================================================
+         Footer: 底部状态栏 (Height: 32px)
+         ==================================================================== -->
+    <footer class="footer-bar">
+      <div class="footer-left">
+        <span>当前视口: <b class="highlight">1920 × 1080 (16:9 标准答辩比例)</b></span>
+        <span>·</span>
+        <span>设计规范: <b class="highlight">Apple HIG × Opencode 极简美学</b></span>
+        <span>·</span>
+        <span>演示模式: <b class="highlight" id="footerModeText">10 页开题汇报 PPT</b></span>
+      </div>
+      <div class="footer-right">
+        <span>Pioneer Desktop Task Assistant · 2027 届数字媒体技术毕业设计 · 演示用户</span>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<!-- ========================================================================
+     抽屉组件: 整理刮削提案抽屉 (#cleanupDrawer)
+     ======================================================================== -->
+<div class="drawer-overlay" id="cleanupDrawer" onclick="if(event.target===this)closeDrawer('cleanup')">
+  <div class="drawer-body-box">
+    <div class="drawer-head">
+      <h2>非破坏性整理提案 · 刮削差异审查</h2>
+      <button class="drawer-close-btn" onclick="closeDrawer('cleanup')">×</button>
+    </div>
+    <div class="drawer-content-scroll">
+      <div style="background:var(--success-bg);border:1px solid rgba(52,199,89,0.3);border-radius:8px;padding:12px 16px;font-size:13px;color:#1E7E34;line-height:1.5;">
+        <b>🛡️ 100% 安全快照保障生效中</b><br>
+        已创建 Git 临时变更分支快照 (#SNAP-CHK0903)。执行后若不满意，随时可一键撤回原始磁盘结构。
+      </div>
+
+      <div style="font-family:var(--font-mono);font-size:12px;color:var(--ink);display:flex;flex-direction:column;gap:10px;">
+        <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 14px;">
+          <span style="color:var(--accent);font-weight:700;">[自动归组]</span> 开题答辩录音.m4a ➜ docs/audio/开题答辩录音.m4a
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 14px;">
+          <span style="color:var(--accent);font-weight:700;">[重命名规范]</span> 截图 2026-09-02.png ➜ docs/assets/pioneer-arch.png
+        </div>
+        <div style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:10px 14px;">
+          <span style="color:var(--accent);font-weight:700;">[文献归档]</span> 往届开题参考.docx ➜ docs/references/参考.docx
+        </div>
+      </div>
+    </div>
+    <div class="drawer-foot">
+      <button class="btn-pill p1" onclick="closeDrawer('cleanup')">取消关闭</button>
+      <button class="btn-pill p0" onclick="approveCleanup()">✔ 批准执行整理提案</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     快捷键与答辩 7 问速查弹窗 (#helpModal)
+     ======================================================================== -->
+<div class="help-modal" id="helpModal" onclick="if(event.target===this)toggleHelpModal()">
+  <div class="help-box">
+    <div class="help-header">
+      <div class="help-tabs">
+        <button class="help-tab-btn active" id="tabShortcuts" onclick="switchHelpTab('shortcuts')">快捷键指南</button>
+        <button class="help-tab-btn" id="tabQA" onclick="switchHelpTab('qa')">答辩 7 问速答清单</button>
+      </div>
+      <button class="help-close-btn" id="modalCloseBtn" onclick="toggleHelpModal()" title="关闭 (Esc / ? / H)">×</button>
+    </div>
+
+    <!-- 快捷键分页面板 -->
+    <div class="help-pane active" id="paneShortcuts">
+      <div class="help-row"><span>下一页</span><span><kbd>→</kbd> <kbd>↓</kbd> <kbd>Space</kbd> <kbd>Enter</kbd> <kbd>PageDown</kbd></span></div>
+      <div class="help-row"><span>上一页</span><span><kbd>←</kbd> <kbd>↑</kbd> <kbd>Backspace</kbd> <kbd>PageUp</kbd></span></div>
+      <div class="help-row"><span>直接跳页</span><span><kbd>1</kbd> ~ <kbd>9</kbd> 直跳第 1~9 页，<kbd>0</kbd> 直跳第 10 页</span></div>
+      <div class="help-row"><span>首尾页</span><span><kbd>Home</kbd> 首页 / <kbd>End</kbd> 末页</span></div>
+      <div class="help-row"><span>全屏演示切换</span><span><kbd>F</kbd></span></div>
+      <div class="help-row"><span>打印 / 无损导出 PDF</span><span><kbd>P</kbd> (调用系统打印无损输出 10 页 PDF)</span></div>
+      <div class="help-row"><span>跨原型快速切换 HUD</span><span><kbd>Alt+0</kbd> ~ <kbd>Alt+4</kbd> 直达 00-04 原型</span></div>
+      <div class="help-row"><span>调出本帮助与答辩速查</span><span><kbd>?</kbd> 或 <kbd>H</kbd></span></div>
+      <div class="help-row"><span>关闭弹窗 / 抽屉</span><span><kbd>Esc</kbd> / <kbd>?</kbd> / <kbd>H</kbd></span></div>
+    </div>
+
+    <!-- 答辩 7 问速查面板 -->
+    <div class="help-pane" id="paneQA">
+      <table class="qa-table">
+        <thead>
+          <tr>
+            <th style="width:26%;">教师提问方向</th>
+            <th>核心回答要点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><b>1. 为什么选这个题？</b></td>
+            <td>现有商业 Agent 界面高度同质化（全是一成不变的聊天框），状态不可控，配置深埋于代码；数媒专业应探索更专业、更可控的人机协同桌面交互范式。</td>
+          </tr>
+          <tr>
+            <td><b>2. 系统主要做什么？</b></td>
+            <td>面向本地工作区的任务助理：上层提供 Jellyfin 海报墙与 Premiere Pro 模块化工作区，底层基于 Pi 极简底盘驱动文件与任务自动化。</td>
+          </tr>
+          <tr>
+            <td><b>3. 最核心的创新与自主工作量？</b></td>
+            <td><b>前端“一切皆 UI”交互体系（Jellyfin 资产海报墙 + PR 可停靠面板）</b> + <b>意图核对卡人机协同机制</b> + <b>前后端全链路事件驱动管道</b>。</td>
+          </tr>
+          <tr>
+            <td><b>4. 用什么技术实现？</b></td>
+            <td>React + TypeScript + 可停靠面板系统（前端） ⟷ WebSocket/SSE 事件流 ⟷ Pi-Agent 极简微内核调度底座与模块化插件（后端）。</td>
+          </tr>
+          <tr>
+            <td><b>5. 和市面工具有何特色/差异？</b></td>
+            <td>突破了传统 Agent 的三栏对话框死板形态；让用户能够像在 PR 中一样自由拼装面板；把项目资产渲染成影视库海报墙，直观可视。</td>
+          </tr>
+          <tr>
+            <td><b>6. 最终验收交付什么？</b></td>
+            <td>可运行桌面交互系统原型 + 前端高保真设计规范 + 极简插件库 + 演示视频 + 完整源码 + 毕业论文。</td>
+          </tr>
+          <tr>
+            <td><b>7. 如果时间不够怎么删减？</b></td>
+            <td>P0 核心（海报墙 + PR 预设工作区 + 意图卡）坚决保底；插件功能库采取渐进式开发，时间紧张时仅保留最基础的本地文件原子插件即可，架构依然完整。</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================
+     轻量 Toast 提示货架 (#toastShelf)
+     ======================================================================== -->
+<div class="toast-shelf" id="toastShelf"></div>
+
+<!-- ====================================================================
+     Pioneer Universal Quick Switcher HUD (Apple HIG x Opencode)
+     ==================================================================== -->
+<style id="pioneer-nav-hud-style">
+.pioneer-nav-hud {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 3px 6px;
+  background: rgba(18, 17, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  user-select: none;
+  font-family: "SF Mono", "Sarasa Mono SC", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+.pioneer-hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDFCFC;
+  letter-spacing: 0.5px;
+}
+.pioneer-hud-brand .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0071E3;
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.8);
+}
+.pioneer-hud-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+}
+.pioneer-hud-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pioneer-hud-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(253, 253, 252, 0.72);
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.pioneer-hud-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FDFCFC;
+  transform: translateY(-1px);
+}
+.pioneer-hud-link.active {
+  background: #0071E3;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.45);
+  cursor: default;
+  transform: none;
+}
+.pioneer-hud-link kbd {
+  font-size: 9px;
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 400;
+}
+.pioneer-hud-link.active kbd {
+  background: rgba(255, 255, 255, 0.25);
+  opacity: 0.85;
+}
+</style>
+
+<nav class="pioneer-nav-hud" id="pioneerNavHUD" aria-label="原型快速切换导航">
+  <div class="pioneer-hud-brand">
+    <span class="dot"></span>
+    <span>PIONEER</span>
+  </div>
+  <div class="pioneer-hud-divider"></div>
+  <div class="pioneer-hud-links">
+    <a href="./00-pioneer-workbench.html" class="pioneer-hud-link" id="hud-link-00" title="快捷键: Alt+0">
+      <span>🚀 主工作台</span><kbd>0</kbd>
+    </a>
+    <a href="./01-bookshelf-workspace.html" class="pioneer-hud-link" id="hud-link-01" title="快捷键: Alt+1">
+      <span>🎬 媒体库海报墙</span><kbd>1</kbd>
+    </a>
+    <a href="./02-session-intent-card.html" class="pioneer-hud-link" id="hud-link-02" title="快捷键: Alt+2">
+      <span>⚡ 任务会话</span><kbd>2</kbd>
+    </a>
+    <a href="./03-wrapup-and-gallery.html" class="pioneer-hud-link" id="hud-link-03" title="快捷键: Alt+3">
+      <span>📦 成果画廊</span><kbd>3</kbd>
+    </a>
+    <a href="./04-ppt-presentation-demo.html" class="pioneer-hud-link active" id="hud-link-04" title="快捷键: Alt+4">
+      <span>📑 答辩幻灯片</span><kbd>4</kbd>
+    </a>
+  </div>
+</nav>
+
+<script>
+/**
+ * -------------------------------------------------------------------------
+ * 1. 16:9 黄金比例响应式舞台自适应引擎
+ * -------------------------------------------------------------------------
+ */
+function resizeStage() {
+  const stage = document.getElementById('mainStage');
+  if (!stage) return;
+  const targetW = 1920;
+  const targetH = 1080;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const scale = Math.min(w / targetW, h / targetH);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeStage);
+window.addEventListener('DOMContentLoaded', resizeStage);
+
+/**
+ * -------------------------------------------------------------------------
+ * 2. 双模态切换系统 (Deck Presentation vs Prototype Slice)
+ * -------------------------------------------------------------------------
+ */
+let currentMainMode = 'deck'; // 'deck' | 'prototype'
+
+function switchMainMode(mode) {
+  currentMainMode = mode;
+  const deckSec = document.getElementById('modeDeck');
+  const protoSec = document.getElementById('modePrototype');
+  const btnDeck = document.getElementById('btnModeDeck');
+  const btnProto = document.getElementById('btnModeProto');
+  const footerText = document.getElementById('footerModeText');
+
+  if (mode === 'deck') {
+    deckSec.style.display = 'flex';
+    protoSec.style.display = 'none';
+    btnDeck.classList.add('active');
+    btnProto.classList.remove('active');
+    if (footerText) footerText.textContent = '10 页开题汇报 PPT';
+    showToast('已切换至: 📑 开题答辩幻灯片 (10页 PPT 演讲态)');
+  } else {
+    deckSec.style.display = 'none';
+    protoSec.style.display = 'flex';
+    btnDeck.classList.remove('active');
+    btnProto.classList.add('active');
+    if (footerText) footerText.textContent = '交互原型切片态';
+    showToast('已切换至: ⚡ 交互原型切片态 (书架与会话操作)');
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 3. 10 页 PPT 幻灯片控制器 (新标准)
+ * -------------------------------------------------------------------------
+ */
+let currentSlide = 0;
+const totalSlides = 10;
+
+function changeSlide(index) {
+  if (index < 0) index = 0;
+  if (index >= totalSlides) index = totalSlides - 1;
+  currentSlide = index;
+
+  // 更新所有 slide 元素
+  for (let i = 0; i < totalSlides; i++) {
+    const sEl = document.getElementById(`slide-${i + 1}`);
+    if (sEl) {
+      if (i === currentSlide) {
+        sEl.classList.add('active');
+        sEl.classList.add('visible');
+      } else {
+        sEl.classList.remove('active');
+        sEl.classList.remove('visible');
+      }
+    }
+  }
+
+  // 更新指示器
+  const indEl = document.getElementById('deckPageIndicator');
+  if (indEl) {
+    const curStr = currentSlide + 1 < 10 ? '0' + (currentSlide + 1) : '' + (currentSlide + 1);
+    indEl.textContent = `${curStr} / 10`;
+  }
+
+  // 更新小圆点
+  const dots = document.querySelectorAll('.deck-dot');
+  dots.forEach((dot, idx) => {
+    if (idx === currentSlide) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 4. 原型切片子视图切换 (Surface 1 vs Surface 2)
+ * -------------------------------------------------------------------------
+ */
+function switchSlice(sliceId) {
+  const p1 = document.getElementById('slicePanel1');
+  const p2 = document.getElementById('slicePanel2');
+  const b1 = document.getElementById('btnSlice1');
+  const b2 = document.getElementById('btnSlice2');
+
+  if (sliceId === 1) {
+    p1.style.display = 'block';
+    p2.style.display = 'none';
+    b1.classList.add('active');
+    b2.classList.remove('active');
+  } else {
+    p1.style.display = 'none';
+    p2.style.display = 'flex';
+    b1.classList.remove('active');
+    b2.classList.add('active');
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 5. 抽屉控制与交互反馈 (淘汰 native alert)
+ * -------------------------------------------------------------------------
+ */
+function openDrawer(drawerId) {
+  const drawer = document.getElementById('cleanupDrawer');
+  if (drawer) drawer.classList.add('open');
+}
+function closeDrawer(drawerId) {
+  const drawer = document.getElementById('cleanupDrawer');
+  if (drawer) {
+    drawer.classList.remove('open');
+  }
+}
+
+function approveCleanup() {
+  closeDrawer('cleanup');
+  showToast('✔ 整理提案已批准执行！已在本地生成安全快照 #SNAP-CHK0903，随时可一键撤销。');
+}
+
+function approveIntent() {
+  showToast('✔ 意图核对已通过！任务正在本地沙箱中安全执行，事件流已同步推进。');
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 6. 快捷键指南与答辩 7 问速查弹窗
+ * -------------------------------------------------------------------------
+ */
+function toggleHelpModal() {
+  const modal = document.getElementById('helpModal');
+  if (modal) {
+    modal.classList.toggle('show');
+  }
+}
+
+function switchHelpTab(tab) {
+  const tShortcuts = document.getElementById('tabShortcuts');
+  const tQA = document.getElementById('tabQA');
+  const pShortcuts = document.getElementById('paneShortcuts');
+  const pQA = document.getElementById('paneQA');
+  if (tab === 'shortcuts') {
+    tShortcuts.classList.add('active');
+    tQA.classList.remove('active');
+    pShortcuts.classList.add('active');
+    pQA.classList.remove('active');
+  } else {
+    tShortcuts.classList.remove('active');
+    tQA.classList.add('active');
+    pShortcuts.classList.remove('active');
+    pQA.classList.add('active');
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 7. 打印 / 无损导出 10 页 PDF
+ * -------------------------------------------------------------------------
+ */
+function triggerPrint() {
+  window.print();
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 8. 代码复制辅助
+ * -------------------------------------------------------------------------
+ */
+function copyCode(btn, text, e) {
+  if (e) e.stopPropagation();
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('✔ 代码已复制到剪贴板: ' + text.substring(0, 30));
+    }).catch(() => {
+      showToast('✔ 代码: ' + text.substring(0, 30));
+    });
+  } else {
+    showToast('✔ 代码: ' + text.substring(0, 30));
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 9. 全屏切换与 Toast 通知
+ * -------------------------------------------------------------------------
+ */
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+function showToast(message) {
+  const shelf = document.getElementById('toastShelf');
+  if (!shelf) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.innerHTML = `<span class="status-dot green"></span><span>${message}</span>`;
+  shelf.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 10. 键盘事件监听 (幻灯片翻页 + 1~9/0 直跳 + P/F/?/H + Alt+0~4)
+ * -------------------------------------------------------------------------
+ */
+window.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  // Esc 关闭弹窗与抽屉
+  if (e.key === 'Escape') {
+    closeDrawer('cleanup');
+    const modal = document.getElementById('helpModal');
+    if (modal) modal.classList.remove('show');
+    return;
+  }
+
+  // ? 或 H 呼出答辩速查与快捷键帮助
+  if (e.key === '?' || e.key === '/' || e.key === 'h' || e.key === 'H') {
+    e.preventDefault();
+    toggleHelpModal();
+    return;
+  }
+
+  // P 打印导出 PDF
+  if (e.key === 'p' || e.key === 'P') {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      triggerPrint();
+      return;
+    }
+  }
+
+  // 全局 Alt+0 ~ Alt+4 导航
+  if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    if (e.key === '0') window.location.href = './00-pioneer-workbench.html';
+    if (e.key === '1') window.location.href = './01-bookshelf-workspace.html';
+    if (e.key === '2') window.location.href = './02-session-intent-card.html';
+    if (e.key === '3') window.location.href = './03-wrapup-and-gallery.html';
+    if (e.key === '4') window.location.href = './04-ppt-presentation-demo.html';
+    return;
+  }
+
+  if (currentMainMode === 'deck') {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ' || e.key === 'PageDown' || e.key === 'Enter') {
+      e.preventDefault();
+      changeSlide(currentSlide + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp' || e.key === 'Backspace' || e.key === 'PageUp') {
+      e.preventDefault();
+      changeSlide(currentSlide - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      changeSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      changeSlide(totalSlides - 1);
+    } else if (e.key >= '1' && e.key <= '9') {
+      e.preventDefault();
+      changeSlide(parseInt(e.key, 10) - 1);
+    } else if (e.key === '0') {
+      e.preventDefault();
+      changeSlide(9); // 直达第 10 页
+    } else if (e.key === 'f' || e.key === 'F') {
+      e.preventDefault();
+      toggleFullScreen();
+    }
+  }
+});
+</script>
+
+</body>
+</html>

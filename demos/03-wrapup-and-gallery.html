@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 03 · 任务收尾与成果画廊 · Pioneer Desktop Task Assistant</title>
+<style>
+/* ==========================================================================
+   Apple HIG × Opencode 设计变量系统 (Design Tokens)
+   ========================================================================== */
+:root {
+  /* Apple HIG 浅色基础画布 */
+  --canvas:           #FDFCFC;
+  --surface:          #F5F5F7;
+  --surface-2:        #F8F7F7;
+  --surface-elevated: #FFFFFF;
+
+  /* 墨水文本色 */
+  --ink:              #1D1D1F;
+  --ink-2:            #6E6E73;
+  --ink-3:            #86868B;
+
+  /* 发丝线条规范 */
+  --line:             #E0DEDE;
+  --line-subtle:      #EBEAEA;
+  --line-strong:      #4B4646;
+
+  /* 品牌行动色 (Apple 经典蓝) */
+  --accent:           #0071E3;
+  --accent-hover:     #0066CC;
+  --accent-light:     #EBF5FF;
+  --accent-focus:     rgba(0, 113, 227, 0.25);
+
+  /* 语义状态色 */
+  --success:          #34C759;
+  --success-bg:       #EBF8EE;
+  --warning:          #FF9500;
+  --warning-bg:       #FFF7EB;
+  --danger:           #FF3B30;
+  --danger-bg:        #FFF2F1;
+
+  /* Opencode 极简暗调终端子系统 */
+  --dark-canvas:      #0E0D0D;
+  --dark-surface:     #161413;
+  --dark-surface-2:   #1E1C1B;
+  --dark-line:        #2E2A29;
+  --dark-line-strong: #3A3635;
+  --on-dark:          #FDFCFC;
+  --on-dark-2:        #8A8585;
+  --on-dark-3:        #5C5756;
+
+  /* 材质与毛玻璃 */
+  --acrylic-light:    rgba(255, 255, 255, 0.82);
+  --acrylic-dark:     rgba(22, 20, 19, 0.85);
+  --glass-border:     rgba(255, 255, 255, 0.12);
+  --drawer-backdrop:  rgba(0, 0, 0, 0.45);
+
+  /* 双轨字体栈 */
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+               "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", "SF Mono", "JetBrains Mono",
+               "Sarasa Gothic SC", "Sarasa Mono SC", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ==========================================================================
+   全局重置与 16:9 响应式舞台自适应引擎
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dark-canvas);
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 舞台视口居中容器 (消除 1080p 屏幕下的滚动条) */
+.stage-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark-canvas);
+  overflow: hidden;
+}
+
+/* 1920x1080 基准逻辑画布 */
+.stage {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  background: var(--canvas);
+  transform-origin: center center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+/* 滚动条克制规范 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.28);
+}
+
+/* ==========================================================================
+   基础控件：胶囊按钮与状态徽标
+   ========================================================================== */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: 1px solid transparent;
+  user-select: none;
+  text-decoration: none;
+}
+.btn-pill.p0 {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.btn-pill.p0:hover {
+  background: var(--accent-hover);
+}
+.btn-pill.p1 {
+  background: var(--surface-elevated);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-pill.p1:hover {
+  background: var(--surface);
+  border-color: #C7C6C6;
+}
+.btn-pill.p-dark {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-line);
+  color: var(--on-dark);
+}
+.btn-pill.p-dark:hover {
+  background: #282524;
+  border-color: var(--dark-line-strong);
+}
+.btn-pill.p-danger {
+  background: var(--danger-bg);
+  border-color: rgba(255, 59, 48, 0.2);
+  color: var(--danger);
+}
+.btn-pill.p-danger:hover {
+  background: #FFE8E6;
+}
+.btn-pill.p-success {
+  background: var(--success-bg);
+  border-color: rgba(52, 199, 89, 0.25);
+  color: #1E7E34;
+}
+.btn-pill.p-success:hover {
+  background: #DCF2E0;
+}
+
+/* 状态徽标 */
+.badge-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--surface-elevated);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.badge-capsule.success {
+  background: var(--success-bg);
+  border-color: rgba(52, 199, 89, 0.3);
+  color: #1E7E34;
+}
+.badge-capsule.warning {
+  background: var(--warning-bg);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #B26A00;
+}
+.badge-capsule.accent {
+  background: var(--accent-light);
+  border-color: rgba(0, 113, 227, 0.25);
+  color: var(--accent);
+}
+.badge-capsule.dark {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-line);
+  color: var(--on-dark-2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  display: inline-block;
+}
+.status-dot.green {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
+}
+.status-dot.blue {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.5);
+}
+
+/* ==========================================================================
+   Header: 顶栏 (Height: 52px)
+   ========================================================================== */
+.app-header {
+  height: 52px;
+  min-height: 52px;
+  background: var(--acrylic-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  user-select: none;
+  z-index: 100;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.traffic-light.close { background: #FF5F56; }
+.traffic-light.min   { background: #FFBD2E; }
+.traffic-light.max   { background: #27C93F; }
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  color: var(--accent);
+}
+.brand-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.2px;
+}
+.brand-title span {
+  color: var(--accent);
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ==========================================================================
+   Main Content 容器
+   ========================================================================== */
+.main-canvas {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 28px 48px 40px;
+  background: var(--canvas);
+}
+
+/* --------------------------------------------------------------------------
+   收尾英雄榜指标 (Wrapup Hero HUD)
+   -------------------------------------------------------------------------- */
+.wrapup-hero-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 24px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.wrapup-hero-info h1 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 6px;
+  letter-spacing: -0.3px;
+}
+.wrapup-hero-info p {
+  font-size: 14px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.metrics-strip {
+  display: flex;
+  gap: 28px;
+}
+.metric-box {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+  font-family: var(--font-mono);
+}
+.metric-box .metric-val {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.metric-box .metric-lbl {
+  font-size: 11px;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   成果画廊网格 (#galleryGrid)
+   -------------------------------------------------------------------------- */
+.artifacts-section-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.artifacts-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+.artifact-item-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: all 0.18s ease;
+  cursor: pointer;
+}
+.artifact-item-card:hover {
+  border-color: #B4B4B9;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+}
+.art-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.art-card-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.art-card-desc {
+  font-size: 12.5px;
+  color: var(--ink-2);
+  line-height: 1.45;
+  flex: 1;
+}
+.art-card-foot {
+  padding-top: 10px;
+  border-top: 1px solid var(--line-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+/* 交付成果卡片 4 大操作动作栏 */
+.art-card-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+.art-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  transition: all 0.15s ease;
+}
+.art-action-btn:hover {
+  background: var(--surface-2);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.art-action-btn.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+.art-action-btn.primary:hover {
+  filter: brightness(1.08);
+}
+
+/* --------------------------------------------------------------------------
+   Runbook 自动化经验提炼沉淀卡片
+   -------------------------------------------------------------------------- */
+.runbook-crystallize-card {
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--success);
+  border-radius: 14px;
+  padding: 22px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.runbook-left h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 5px;
+}
+.runbook-left p {
+  font-size: 13px;
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+
+/* --------------------------------------------------------------------------
+   离线 TTS 语音播报条
+   -------------------------------------------------------------------------- */
+.offline-tts-strip {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-line);
+  border-radius: 8px;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  color: var(--on-dark);
+}
+
+/* --------------------------------------------------------------------------
+   全局底部微型状态栏 (Footer Bar, Height: 32px)
+   -------------------------------------------------------------------------- */
+.global-statusbar {
+  height: 32px;
+  min-height: 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  user-select: none;
+}
+.statusbar-left, .statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.statusbar-highlight {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* ==========================================================================
+   抽屉组件: 版本变更审阅 Diff 抽屉 (#diffDrawer)
+   ========================================================================== */
+.drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--drawer-backdrop);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: flex-end;
+}
+.drawer-overlay.open {
+  display: flex;
+}
+.drawer-body-box {
+  width: 720px;
+  height: 100%;
+  background: var(--surface-elevated);
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-overlay.open .drawer-body-box {
+  transform: translateX(0);
+}
+.drawer-head {
+  height: 56px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+.drawer-head h2 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.drawer-close-btn {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: 18px;
+  transition: all 0.15s;
+}
+.drawer-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+}
+.drawer-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.drawer-foot {
+  height: 64px;
+  padding: 0 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+
+/* Diff 红绿代码块 */
+.diff-view-box {
+  background: var(--dark-surface);
+  border: 1px solid var(--dark-line);
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.diff-line {
+  display: flex;
+  padding: 3px 12px;
+}
+.diff-line .ln {
+  width: 36px;
+  color: var(--on-dark-3);
+  user-select: none;
+  flex-shrink: 0;
+}
+.diff-line .sign {
+  width: 18px;
+  flex-shrink: 0;
+}
+.diff-line.del {
+  background: rgba(255, 59, 48, 0.15);
+  color: #FF8079;
+}
+.diff-line.add {
+  background: rgba(52, 199, 89, 0.15);
+  color: #72E68C;
+}
+.diff-line.context {
+  color: var(--on-dark-2);
+}
+
+/* ==========================================================================
+   高保真产物快速查看弹窗 (Quick Look Modal)
+   ========================================================================== */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open {
+  display: flex;
+}
+.modal-box {
+  width: 860px;
+  max-height: 85%;
+  background: var(--surface-elevated);
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   轻量 Toast 提示系统
+   ========================================================================== */
+.toast-shelf {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.toast-msg {
+  background: rgba(22, 20, 19, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 8px 20px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: toastPop 3s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@keyframes toastPop {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+</style>
+</head>
+<body>
+
+<div class="stage-viewport">
+  <main class="stage" id="mainStage">
+
+    <!-- ====================================================================
+         Header: 顶栏
+         ==================================================================== -->
+    <header class="app-header">
+      <div class="header-left">
+        <div class="traffic-lights">
+          <div class="traffic-light close" onclick="showToast('macOS 窗口最小化/关闭模拟')" title="关闭"></div>
+          <div class="traffic-light min" onclick="showToast('macOS 窗口最小化模拟')" title="最小化"></div>
+          <div class="traffic-light max" onclick="toggleFullScreen()" title="全屏切换"></div>
+        </div>
+
+        <div class="brand-group">
+          <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          <div class="brand-title">PIONEER <span>AGENT</span> · 任务交付成果与收尾</div>
+        </div>
+
+        <span class="badge-capsule success">
+          <span class="status-dot green"></span>
+          ✓ 任务收尾已归档
+        </span>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn-pill p1" onclick="openDrawer('diff')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+          审阅变更 Diff
+        </button>
+        <button class="btn-pill p-danger" onclick="rollbackTaskChanges('task-gd-01')">
+          回滚此任务 [Rollback]
+        </button>
+        <a href="./00-pioneer-workbench.html" class="btn-pill p0">
+          🚀 直达 00 主工作台
+        </a>
+        <button class="btn-pill p1" onclick="toggleFullScreen()">
+          ⛶ 全屏
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         Main Canvas: 收尾英雄榜、成果画廊与 Runbook
+         ==================================================================== -->
+    <div class="main-canvas">
+
+      <!-- 收尾英雄榜 (4 项核心指标) -->
+      <div class="wrapup-hero-card">
+        <div class="wrapup-hero-info">
+          <h1>任务已圆满收尾 · 开题材料与规范库完整落地</h1>
+          <p>
+            已将个人信息（演示用户 / 2026000000）、3 页设计规范范例与 3 份核心交互页面交付至对应工程目录。
+          </p>
+        </div>
+        <div class="metrics-strip">
+          <div class="metric-box">
+            <span class="metric-val" style="color:var(--accent);">12.4s</span>
+            <span class="metric-lbl">总执行用时</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-val" style="color:var(--success);">0</span>
+            <span class="metric-lbl">Token 费用 (本地 Qwen)</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-val">6 份</span>
+            <span class="metric-lbl">产生产物</span>
+          </div>
+          <div class="metric-box">
+            <span class="metric-val" style="color:var(--success);">100%</span>
+            <span class="metric-lbl">AST 校验通过</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 任务交付成果标题 -->
+      <div class="artifacts-section-title">
+        <span>$ TASK DELIVERABLES · 任务交付成果 (查看与操作)</span>
+        <span style="font-size:12px;color:var(--ink-3);">点击卡片直接展开高保真预览 · 零跨域依赖</span>
+      </div>
+
+      <!-- 6 份交付物卡片矩阵 -->
+      <div class="artifacts-cards-grid" id="galleryGrid">
+
+        <!-- 产物 1: 01-design-tokens.html -->
+        <div class="artifact-item-card" onclick="openQuickLook('tokens')">
+          <div class="art-card-top">
+            <span class="badge-capsule accent">HTML / 规范范例</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">8.2 KB</span>
+          </div>
+          <div class="art-card-title">01-design-tokens.html</div>
+          <div class="art-card-desc">
+            Apple HIG × Opencode 双轨设计 Token、发丝线与 SF Pro/Mono 色彩排印系统范例。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 验证通过</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('01-design-tokens.html', '01-design-tokens.html')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('01-design-tokens.html')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('01-design-tokens.html', '01-design-tokens.html')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('01-design-tokens.html')">复制路径</button>
+          </div>
+        </div>
+
+        <!-- 产物 2: 02-components.html -->
+        <div class="artifact-item-card" onclick="openQuickLook('components')">
+          <div class="art-card-top">
+            <span class="badge-capsule accent">HTML / 组件范例</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">14.5 KB</span>
+          </div>
+          <div class="art-card-title">02-components.html</div>
+          <div class="art-card-desc">
+            意图核对卡、整理闸门与会话分支树时光机核心交互组件库范例。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 验证通过</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('02-components.html', '02-components.html')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('02-components.html')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('02-components.html', '02-components.html')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('02-components.html')">复制路径</button>
+          </div>
+        </div>
+
+        <!-- 产物 3: 03-wrapup-and-gallery.html -->
+        <div class="artifact-item-card" onclick="openQuickLook('gallery-page')">
+          <div class="art-card-top">
+            <span class="badge-capsule accent">HTML / 交互原型</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">11.6 KB</span>
+          </div>
+          <div class="art-card-title">03-wrapup-and-gallery.html</div>
+          <div class="art-card-desc">
+            任务收尾英雄榜、成果画廊内联预览与 Runbook 沉淀独立原型。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 验证通过</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('03-wrapup-and-gallery.html', '03-wrapup-and-gallery.html')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('03-wrapup-and-gallery.html')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('03-wrapup-and-gallery.html', '03-wrapup-and-gallery.html')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('03-wrapup-and-gallery.html')">复制路径</button>
+          </div>
+        </div>
+
+        <!-- 产物 4: 04-ppt-presentation-demo.html -->
+        <div class="artifact-item-card" onclick="openQuickLook('ppt-demo')">
+          <div class="art-card-top">
+            <span class="badge-capsule accent">HTML / 演示舞台</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">31.2 KB</span>
+          </div>
+          <div class="art-card-title">04-ppt-presentation-demo.html</div>
+          <div class="art-card-desc">
+            开题答辩现场 16:9 全屏演示舞台与 8 页交互演示切片。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 验证通过</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('04-ppt-presentation-demo.html', '04-ppt-presentation-demo.html')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('04-ppt-presentation-demo.html')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('04-ppt-presentation-demo.html', '04-ppt-presentation-demo.html')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('04-ppt-presentation-demo.html')">复制路径</button>
+          </div>
+        </div>
+
+        <!-- 产物 5: 开题PPT逐页文案.md -->
+        <div class="artifact-item-card" onclick="openQuickLook('script-markdown')">
+          <div class="art-card-top">
+            <span class="badge-capsule">Markdown / 汇报文案</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">9.4 KB</span>
+          </div>
+          <div class="art-card-title">开题PPT逐页文案.md</div>
+          <div class="art-card-desc">
+            已将学生演示用户、指导教师与 8 页逐页讲述文案严密对齐。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 已注入</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('开题PPT逐页文案.md', '开题PPT逐页文案.md')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('开题PPT逐页文案.md')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('开题PPT逐页文案.md', '开题PPT逐页文案.md')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('开题PPT逐页文案.md')">复制路径</button>
+          </div>
+        </div>
+
+        <!-- 产物 6: tau2-ablation-chart.svg -->
+        <div class="artifact-item-card" onclick="openQuickLook('ablation-chart')">
+          <div class="art-card-top">
+            <span class="badge-capsule warning">SVG / 评测图表</span>
+            <span style="font-family:var(--font-mono);font-size:11px;color:var(--ink-3);">5.8 KB</span>
+          </div>
+          <div class="art-card-title">tau2-ablation-chart.svg</div>
+          <div class="art-card-desc">
+            Qwen3.6-27B 挂载防早停自适应层前后的遍历成功率对比曲线图。
+          </div>
+          <div class="art-card-foot">
+            <span>状态: 绘制完成</span>
+            <span style="color:var(--accent);font-weight:600;">快速查看 →</span>
+          </div>
+          <div class="art-card-actions">
+            <button class="art-action-btn primary" onclick="event.stopPropagation(); openDeliverable('tau2-ablation-chart.svg', 'tau2-ablation-chart.svg')">打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); openInFolder('tau2-ablation-chart.svg')">文件夹内打开</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyContent('tau2-ablation-chart.svg', 'tau2-ablation-chart.svg')">复制</button>
+            <button class="art-action-btn" onclick="event.stopPropagation(); copyFilePath('tau2-ablation-chart.svg')">复制路径</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Runbook 自动化经验提炼沉淀卡片 -->
+      <div class="runbook-crystallize-card">
+        <div class="runbook-left">
+          <h3>经验提炼：保存为项目 Runbook · <code>thesis-spec-alignment</code></h3>
+          <p>
+            已将本次工作流自动参数化提取为可复用执行脚本 <code>runbook-align-gd-materials.sh</code>（自动替换 $WORKSPACE 与 $STUDENT_ID）。当前状态：<span id="ep-demo-thesis-2027" class="badge-capsule success">第 4 集 · 自动化已沉淀</span>
+          </p>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <button class="btn-pill p-success" id="btnSaveRunbook" onclick="saveRunbook('demo-thesis-2027')">
+            保存为项目 Runbook (集数+1)
+          </button>
+          <button class="btn-pill p1" id="btnForgetCache" onclick="forgetTaskCache('demo-thesis-2027')">
+            一键清理遗忘 (Forget)
+          </button>
+        </div>
+      </div>
+
+      <!-- 离线 TTS 语音播报条 -->
+      <div class="offline-tts-strip">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="status-dot blue"></span>
+          <span>[🎙️ 离线语音播报] “演示用户，开题材料、规范范例与 6 份交互原型已全部收尾生成完毕，耗时 12.4 秒。”</span>
+        </div>
+        <button class="btn-pill p-dark" style="height:26px;padding:0 10px;font-size:11px;" onclick="showToast('已重新触发离线 TTS 语音播放')">
+          重播语音
+        </button>
+      </div>
+
+    </div>
+
+    <!-- ====================================================================
+         Global Statusbar: 全局底部微型状态栏 (Height: 32px)
+         ==================================================================== -->
+    <footer class="global-statusbar">
+      <div class="statusbar-left">
+        <span>⚡ Pioneer Agent Runtime · v1.2.0</span>
+        <span>PID: 8291 (Archived)</span>
+        <span>状态: <span class="statusbar-highlight">任务执行圆满完成</span></span>
+      </div>
+      <div class="statusbar-right">
+        <span>AST Parser: <b style="color:var(--success);">100% Passed</b></span>
+        <span>1920×1080 Stage: <b class="statusbar-highlight">Locked</b></span>
+      </div>
+    </footer>
+
+    <!-- ====================================================================
+         抽屉: 文件版本前后 Diff 对比审阅抽屉 (#diffDrawer)
+         ==================================================================== -->
+    <div class="drawer-overlay" id="diffDrawer" onclick="if(event.target===this) closeDrawer('diff');">
+      <div class="drawer-body-box" style="width:720px;">
+        <div class="drawer-head">
+          <h2>版本变更审阅 · 开题PPT逐页文案.md</h2>
+          <button class="drawer-close-btn" onclick="closeDrawer('diff')">×</button>
+        </div>
+
+        <div class="drawer-content-scroll">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="badge-capsule">Git Hunk 1 of 2</span>
+            <span style="font-family:var(--font-mono);font-size:12px;color:var(--ink-3);">+42 lines, -18 lines</span>
+          </div>
+
+          <!-- Diff 红绿代码块 -->
+          <div class="diff-view-box">
+            <div class="diff-line context"><span class="ln">16</span><span class="sign"> </span><span>## Slide 01 · 封面与开题答辩概要</span></div>
+            <div class="diff-line context"><span class="ln">17</span><span class="sign"> </span><span></span></div>
+            <div class="diff-line del"><span class="ln">18</span><span class="sign">-</span><span>- 课题信息：学生 [待填] · 学号 [待填] · 指导教师 [待填]</span></div>
+            <div class="diff-line add"><span class="ln">18</span><span class="sign">+</span><span>- 课题信息：学生 演示用户 · 学号 2026000000 · 班级 示例班级 · 指导教师</span></div>
+            <div class="diff-line context"><span class="ln">19</span><span class="sign"> </span><span></span></div>
+            <div class="diff-line context"><span class="ln">20</span><span class="sign"> </span><span>讲稿（约 20 秒）：</span></div>
+            <div class="diff-line del"><span class="ln">21</span><span class="sign">-</span><span>> 各位老师好，我的毕业设计课题是...</span></div>
+            <div class="diff-line add"><span class="ln">21</span><span class="sign">+</span><span>> 各位评委老师好，我是示例班级演示用户，我的毕设课题是基于模块化架构的桌面任务助理 Agent 交互系统设计与实现...</span></div>
+            <div class="diff-line context"><span class="ln">22</span><span class="sign"> </span><span></span></div>
+            <div class="diff-line context"><span class="ln">23</span><span class="sign"> </span><span>## Slide 02 · 选题背景与核心痛点剖析</span></div>
+            <div class="diff-line add"><span class="ln">24</span><span class="sign">+</span><span>- 突破点：取缔传统死板三栏，融合 Jellyfin 资产海报墙与 Premiere Pro 模块化工作区</span></div>
+          </div>
+
+          <div style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px;font-size:12.5px;color:var(--ink-2);line-height:1.5;">
+            💡 <strong>AST 语法对齐检查</strong>：已检测 Markdown 结构树完整无破损，前后标题层级一致。
+          </div>
+        </div>
+
+        <div class="drawer-foot">
+          <button class="btn-pill p-danger" onclick="rollbackTaskChanges('task-gd-01')">
+            一键回滚全部变更
+          </button>
+          <button class="btn-pill p0" onclick="closeDrawer('diff'); showToast('✔ 变更已成功确认并原子写入磁盘！');">
+            ✔ 确认提交此变更
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         弹窗: 高保真产物快速查看弹窗 (#quickLookModal)
+         ==================================================================== -->
+    <div class="modal-overlay" id="quickLookModal" onclick="if(event.target===this) closeQuickLook();">
+      <div class="modal-box">
+        <div class="drawer-head">
+          <h2 id="modalTitle">产物快速检查 (Quick Look)</h2>
+          <button class="drawer-close-btn" onclick="closeQuickLook()">×</button>
+        </div>
+        <div style="padding:24px 28px;overflow-y:auto;max-height:540px;font-family:var(--font-mono);font-size:13px;line-height:1.6;background:var(--surface);" id="modalContent">
+          <!-- 动态注入预览代码或图表 -->
+        </div>
+        <div class="drawer-foot">
+          <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--ink-3);">原生 Vanilla 渲染 · 零跨域依赖</span>
+          <button class="btn-pill p0" onclick="closeQuickLook()">完成审阅</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 轻量 Toast 挂载容器 -->
+    <div class="toast-shelf" id="toastShelf"></div>
+
+  </main>
+</div>
+
+<!-- ====================================================================
+     Pioneer Universal Quick Switcher HUD (Apple HIG x Opencode)
+     ==================================================================== -->
+<style id="pioneer-nav-hud-style">
+.pioneer-nav-hud {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 3px 6px;
+  background: rgba(18, 17, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  user-select: none;
+  font-family: "SF Mono", "Sarasa Mono SC", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+.pioneer-hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDFCFC;
+  letter-spacing: 0.5px;
+}
+.pioneer-hud-brand .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0071E3;
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.8);
+}
+.pioneer-hud-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+}
+.pioneer-hud-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pioneer-hud-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(253, 253, 252, 0.72);
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.pioneer-hud-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FDFCFC;
+  transform: translateY(-1px);
+}
+.pioneer-hud-link.active {
+  background: #0071E3;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.45);
+  cursor: default;
+  transform: none;
+}
+.pioneer-hud-link kbd {
+  font-size: 9px;
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 400;
+}
+.pioneer-hud-link.active kbd {
+  background: rgba(255, 255, 255, 0.25);
+  opacity: 0.85;
+}
+</style>
+
+<nav class="pioneer-nav-hud" id="pioneerNavHUD" aria-label="原型快速切换导航">
+  <div class="pioneer-hud-brand">
+    <span class="dot"></span>
+    <span>PIONEER</span>
+  </div>
+  <div class="pioneer-hud-divider"></div>
+  <div class="pioneer-hud-links">
+    <a href="./00-pioneer-workbench.html" class="pioneer-hud-link" id="hud-link-00" title="快捷键: Alt+0">
+      <span>🚀 主工作台</span><kbd>0</kbd>
+    </a>
+    <a href="./01-bookshelf-workspace.html" class="pioneer-hud-link" id="hud-link-01" title="快捷键: Alt+1">
+      <span>🎬 媒体库海报墙</span><kbd>1</kbd>
+    </a>
+    <a href="./02-session-intent-card.html" class="pioneer-hud-link" id="hud-link-02" title="快捷键: Alt+2">
+      <span>⚡ 任务会话</span><kbd>2</kbd>
+    </a>
+    <a href="./03-wrapup-and-gallery.html" class="pioneer-hud-link active" id="hud-link-03" title="快捷键: Alt+3">
+      <span>📦 成果画廊</span><kbd>3</kbd>
+    </a>
+    <a href="./04-ppt-presentation-demo.html" class="pioneer-hud-link" id="hud-link-04" title="快捷键: Alt+4">
+      <span>📑 答辩幻灯片</span><kbd>4</kbd>
+    </a>
+  </div>
+</nav>
+
+<script id="pioneer-nav-hud-script">
+(function() {
+  // 设置当前页 Active 态
+  var path = window.location.pathname;
+  if (path.indexOf('00-pioneer-workbench') !== -1) document.getElementById('hud-link-00').classList.add('active');
+  else if (path.indexOf('01-bookshelf-workspace') !== -1) document.getElementById('hud-link-01').classList.add('active');
+  else if (path.indexOf('02-session-intent-card') !== -1) document.getElementById('hud-link-02').classList.add('active');
+  else if (path.indexOf('03-wrapup-and-gallery') !== -1) document.getElementById('hud-link-03').classList.add('active');
+  else if (path.indexOf('04-ppt-presentation-demo') !== -1) document.getElementById('hud-link-04').classList.add('active');
+
+  // 键盘快捷键监听: Alt+0 ~ Alt+4 秒级直达
+  window.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+    if (e.altKey && !e.ctrlKey && !e.metaKey) {
+      if (e.key === '0') window.location.href = './00-pioneer-workbench.html';
+      if (e.key === '1') window.location.href = './01-bookshelf-workspace.html';
+      if (e.key === '2') window.location.href = './02-session-intent-card.html';
+      if (e.key === '3') window.location.href = './03-wrapup-and-gallery.html';
+      if (e.key === '4') window.location.href = './04-ppt-presentation-demo.html';
+    }
+  });
+})();
+</script>
+
+<script>
+/**
+ * -------------------------------------------------------------------------
+ * 1. 16:9 舞台自适应缩放算法
+ * -------------------------------------------------------------------------
+ */
+function resizeStage() {
+  const stage = document.getElementById('mainStage');
+  if (!stage) return;
+  const targetW = 1920;
+  const targetH = 1080;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const scale = Math.min(w / targetW, h / targetH);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeStage);
+window.addEventListener('DOMContentLoaded', resizeStage);
+
+/**
+ * -------------------------------------------------------------------------
+ * 2. 应用状态模型 (AppState)
+ * -------------------------------------------------------------------------
+ */
+const AppState = {
+  activeProjectId: 'demo-thesis-2027',
+  projectEpisodes: {
+    'demo-thesis-2027': 4,
+    'agent-runtime-pi': 12,
+    'model-adapter-engine': 8
+  }
+};
+
+/**
+ * -------------------------------------------------------------------------
+ * 3. 抽屉控制与回滚机制
+ * -------------------------------------------------------------------------
+ */
+function openDrawer(drawerId) {
+  const drawer = document.getElementById(drawerId === 'diff' ? 'diffDrawer' : 'diffDrawer');
+  if (drawer) drawer.classList.add('open');
+}
+function closeDrawer(drawerId) {
+  const drawer = document.getElementById(drawerId === 'diff' ? 'diffDrawer' : 'diffDrawer');
+  if (drawer) drawer.classList.remove('open');
+}
+
+function rollbackTaskChanges(taskId) {
+  closeDrawer('diff');
+  showToast('✔ 已触发一键撤销！工作区文件状态已安全回滚至快照 #CHK-0903');
+  return { success: true };
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 4. Runbook 沉淀与遗忘机制
+ * -------------------------------------------------------------------------
+ */
+function saveRunbook(projectId) {
+  const pId = projectId || AppState.activeProjectId;
+  if (AppState.projectEpisodes[pId] !== undefined) {
+    AppState.projectEpisodes[pId] += 1;
+    const epCount = AppState.projectEpisodes[pId];
+    const epEl = document.getElementById(`ep-${pId}`);
+    if (epEl) {
+      epEl.innerHTML = `第 ${epCount} 集 · 自动化已沉淀`;
+    }
+    showToast(`✔ 本次任务自动化脚本已沉淀为 Runbook！项目 [${pId}] 历史集数更新为: 第 ${epCount} 集`);
+  }
+}
+
+function forgetTaskCache(projectId) {
+  showToast('✔ 已执行一键遗忘！临时执行上下文与缓存已彻底抹除，保障数据隐私主权。');
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 5. 成果画廊快速查看弹窗 (Quick Look)
+ * -------------------------------------------------------------------------
+ */
+const quickLookData = {
+  'tokens': {
+    title: '01-design-tokens.html · 设计 Token 与字体层级',
+    content: `<pre><code>:root {
+  --canvas:           #FDFCFC; /* 暖白画布 */
+  --surface:          #F5F5F7; /* Apple 浅灰表面 */
+  --dark:             #161413; /* Opencode 极简暗调终端 */
+  --accent:           #0071E3; /* Apple 经典蓝 */
+  --line:             #E0DEDE; /* 1px 发丝边框 */
+  --font-sans:        "SF Pro Text", "PingFang SC", sans-serif;
+  --font-mono:        "Berkeley Mono", "SF Mono", monospace;
+}</code></pre>`
+  },
+  'components': {
+    title: '02-components.html · 核心组件与交互闸门',
+    content: `<pre><code>/* 意图核对卡 (Intent Card) 人机拍板结构 */
+&lt;div class="intent-card"&gt;
+  &lt;h2&gt;理解核对：对齐开题汇报 8 页文案与个人信息注入&lt;/h2&gt;
+  &lt;button class="btn-pill p0"&gt;批准执行 [Enter]&lt;/button&gt;
+&lt;/div&gt;</code></pre>`
+  },
+  'gallery-page': {
+    title: '03-wrapup-and-gallery.html · 任务收尾与成果画廊',
+    content: `<pre><code>/* Wrapup HUD Metrics */
+总耗时: 12.4s
+Token 费用: 0 (本地离线 Qwen3.6)
+产出文件: 6 份
+状态: 100% 验证通过</code></pre>`
+  },
+  'ppt-demo': {
+    title: '04-ppt-presentation-demo.html · 16:9 全屏演示舞台',
+    content: `<pre><code>// 16:9 响应式缩放核心算法
+const scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+stage.style.transform = \`scale(\${scale})\`;</code></pre>`
+  },
+  'script-markdown': {
+    title: '开题PPT逐页文案.md (已完成个人信息精准注入)',
+    content: `<pre><code># 毕业设计开题答辩逐页文案与个人信息
+- 课题：基于模块化架构的桌面任务助理 Agent 交互系统设计与实现
+- 学生：演示用户
+- 学号：2026000000
+- 班级：示例班级
+- 指导教师：指导教师</code></pre>`
+  },
+  'ablation-chart': {
+    title: 'tau2-ablation-chart.svg · 模型自适应消融对比图',
+    content: `<div style="text-align:center;padding:20px;">
+      <svg width="400" height="180" viewBox="0 0 400 180">
+        <line x1="40" y1="140" x2="360" y2="140" stroke="#8E8E93" stroke-width="2"/>
+        <line x1="40" y1="20" x2="40" y2="140" stroke="#8E8E93" stroke-width="2"/>
+        <polyline points="40,140 100,100 180,60 260,35 340,25" fill="none" stroke="#0071E3" stroke-width="3"/>
+        <polyline points="40,140 100,110 180,135 260,140 340,140" fill="none" stroke="#FF3B30" stroke-width="2" stroke-dasharray="4"/>
+        <text x="350" y="30" fill="#0071E3" font-size="12">Pioneer 自适应 (100%)</text>
+        <text x="350" y="145" fill="#FF3B30" font-size="12">原生 Qwen (早停)</text>
+      </svg>
+    </div>`
+  }
+};
+
+function openQuickLook(key) {
+  const item = quickLookData[key];
+  if (!item) return;
+  document.getElementById('modalTitle').innerText = item.title;
+  document.getElementById('modalContent').innerHTML = item.content;
+  document.getElementById('quickLookModal').classList.add('open');
+}
+
+function closeQuickLook() {
+  document.getElementById('quickLookModal').classList.remove('open');
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 5.1 交付物卡片 4 大标准操作动作
+ * -------------------------------------------------------------------------
+ */
+function openDeliverable(path, title) {
+  const map = {
+    '01-design-tokens.html': 'tokens',
+    '02-components.html': 'components',
+    '03-wrapup-and-gallery.html': 'gallery-page',
+    '04-ppt-presentation-demo.html': 'ppt-demo',
+    '开题PPT逐页文案.md': 'script-markdown',
+    'tau2-ablation-chart.svg': 'ablation-chart'
+  };
+  openQuickLook(map[path] || 'tokens');
+}
+
+function openInFolder(path) {
+  showToast(`已在系统文件管理器中定位: ${path}`);
+}
+
+function copyContent(contentId, title) {
+  const sampleText = `[Pioneer 交付成果: ${title || contentId}]\n文件路径: ${contentId}\n生成时间: 2026-04-14T09:30:00+08:00\n调度内核: Pi EventStream Engine\n状态: 已完成校验并归档`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(sampleText).then(() => {
+      showToast(`已复制内容到剪贴板: ${title || contentId}`);
+    }).catch(() => {
+      showToast(`已复制内容到剪贴板: ${title || contentId}`);
+    });
+  } else {
+    showToast(`已复制内容到剪贴板: ${title || contentId}`);
+  }
+}
+
+function copyFilePath(path) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(path).then(() => {
+      showToast(`已复制文件路径: ${path}`);
+    }).catch(() => {
+      showToast(`已复制文件路径: ${path}`);
+    });
+  } else {
+    showToast(`已复制文件路径: ${path}`);
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 6. 辅助通知与全屏控制
+ * -------------------------------------------------------------------------
+ */
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+function showToast(message) {
+  const shelf = document.getElementById('toastShelf');
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.innerHTML = `<span class="status-dot green"></span><span>${message}</span>`;
+  shelf.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+// ESC 快捷键关闭弹窗与抽屉
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeQuickLook();
+    closeDrawer('diff');
+  }
+});
+</script>
+
+</body>
+</html>

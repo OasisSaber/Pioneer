@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 · Components & Interaction Surfaces · Wonderwall-Pi Agent 规范范例</title>
+<style>
+:root {
+  --canvas: #FDFCFC;
+  --surface: #F5F5F7;
+  --surface-2: #F8F7F7;
+  --ink: #1D1D1F;
+  --ink-2: #6E6E73;
+  --ink-3: #86868B;
+  --line: #E0DEDE;
+  --line-strong: #4B4646;
+  --accent: #0071E3;
+  --accent-2: #0066CC;
+  --dark: #161413;
+  --dark-surface: #1E1C1B;
+  --on-dark: #FDFCFC;
+  --on-dark-2: #8A8585;
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --font-mono: "SF Mono", "Sarasa Gothic SC", "Sarasa Mono SC", "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  padding: 40px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 20px;
+  margin-bottom: 36px;
+}
+.brand-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+.brand-title span { color: var(--accent); }
+.meta-tag {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--ink-3);
+}
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 18px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  letter-spacing: 1px;
+}
+
+.pill-group {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.pill.p0 { background: var(--accent); color: #fff; border: none; }
+.pill.p0:hover { background: var(--accent-2); }
+.pill.p1 { background: var(--canvas); border: 1px solid var(--ink-3); color: var(--ink-2); }
+.pill.model { background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-weight: 500; }
+.pill.model .dot { width: 6px; height: 6px; border-radius: 50%; background: #34C759; margin-right: 8px; }
+
+.grid-2x2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 40px;
+}
+
+/* Component 1: Intent Card */
+.intent-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 14px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.card-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.card-summary {
+  font-size: 15px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.step-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 14px;
+  color: var(--ink);
+  background: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+}
+.step-num {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: 700;
+}
+.card-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}
+
+/* Component 2: Bookshelf Card */
+.project-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.proj-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.proj-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+  font-family: var(--font-mono);
+}
+.proj-desc {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.proj-meta {
+  display: flex;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+/* Component 3: Adaptive Light Hint */
+.light-hint-container {
+  background: var(--dark);
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--on-dark);
+}
+.light-hint-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.hint-badge {
+  background: var(--accent);
+  color: #fff;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.hint-expand {
+  color: var(--on-dark-2);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 12px;
+}
+
+/* Component 4: Clean-up Diff Proposal */
+.diff-table-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.diff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+.diff-src { color: var(--ink-2); text-decoration: line-through; }
+.diff-arr { color: var(--accent); font-weight: 700; margin: 0 8px; }
+.diff-dst { color: var(--ink); font-weight: 600; }
+.diff-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--surface); border: 1px solid var(--line); color: var(--ink-2); }
+
+.nav-back {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+.nav-back a { color: var(--accent); text-decoration: none; }
+.nav-back a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div>
+    <div class="meta-tag">SPECIFICATION EXEMPLAR · 02</div>
+    <div class="brand-title">Component Sets & Surfaces · <span>Wonderwall-Pi</span></div>
+  </div>
+  <div class="meta-tag">2027 届毕业设计 · 界面组件规范范例</div>
+</header>
+
+<div class="section-title">$ PILL BADGES & TAGS (胶囊徽标与状态组件)</div>
+<div class="pill-group">
+  <div class="pill p0">P0 核心架构</div>
+  <div class="pill p1">P1 差异外延</div>
+  <div class="pill model"><span class="dot"></span>Qwen3.6-27B · local</div>
+  <div class="pill model"><span class="dot" style="background:#0071E3;"></span>Pi Harness Runtime</div>
+  <div class="pill model">State Hub · Rev 14</div>
+</div>
+
+<div class="section-title">$ FOUR SURFACES ATOMIC COMPONENTS (核心四表面组件)</div>
+<div class="grid-2x2">
+
+  <!-- Component 1: Intent Card -->
+  <div class="intent-card">
+    <div class="card-header">
+      <span class="pill model" style="height:26px;font-size:12px;">意图核对 · 闸门生效中</span>
+      <span style="font-size:12px;font-family:var(--font-mono);color:var(--accent);">● 待审批</span>
+    </div>
+    <div class="card-title">整理本地 D:\Project 中的 14 个未归档项目</div>
+    <div class="card-summary">
+      Agent 已识别出 8 个 Git 仓库、4 个临时测试目录及 2 个空文件夹。将执行自动分类与标准重命名，删除操作已设为禁用保护。
+    </div>
+    <div class="steps-list">
+      <div class="step-item"><span class="step-num">01</span><span>扫描 package.json / README 提取项目元信息</span></div>
+      <div class="step-item"><span class="step-num">02</span><span>生成路径变更 Diff 提案表，提供安全撤销快照</span></div>
+      <div class="step-item"><span class="step-num">03</span><span>执行原子移动并在收尾页沉淀 Runbook 模板</span></div>
+    </div>
+    <div class="card-actions">
+      <button class="pill p0">批准执行 [Enter]</button>
+      <button class="pill p1">修改方案 [E]</button>
+    </div>
+  </div>
+
+  <!-- Component 2: Bookshelf Project Card -->
+  <div class="project-card">
+    <div class="proj-title-row">
+      <div class="proj-name">demo-thesis-2027</div>
+      <span class="pill model" style="height:24px;font-size:11px;">Git Clean</span>
+    </div>
+    <div class="proj-desc">
+      面向多模型自适应的任务助理 Agent 系统（Wonderwall-Pi）。已包含 8 份设计总纲与 HTML 开题演示。
+    </div>
+    <div class="proj-meta">
+      <span>Language: TypeScript / HTML</span>
+      <span>Last active: 10 分钟前</span>
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="pill p0" style="height:32px;font-size:13px;">进入会话 →</button>
+      <button class="pill p1" style="height:32px;font-size:13px;">执行 Runbook</button>
+    </div>
+  </div>
+
+  <!-- Component 3: Adaptive Light Hint -->
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    <div class="light-hint-container">
+      <div class="light-hint-left">
+        <span class="hint-badge">ADAPT</span>
+        <span>$ [Qwen3.6 适配] 检测到大目录遍历，已动态挂载防早停深度策略</span>
+      </div>
+      <span class="hint-expand">查看规则 →</span>
+    </div>
+    <div class="light-hint-container" style="background:#1E1C1B;">
+      <div class="light-hint-left">
+        <span class="hint-badge" style="background:#34C759;">REPLAY</span>
+        <span>$ [State Hub] 变更集快照 #G5-2026 已就绪，支持 100% 整体回滚</span>
+      </div>
+      <span class="hint-expand">回滚预览 →</span>
+    </div>
+  </div>
+
+  <!-- Component 4: Clean-up Diff Proposal -->
+  <div class="diff-table-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <b style="font-size:16px;">整理闸门 · 路径级变更预览</b>
+      <span style="font-size:12px;font-family:var(--font-mono);color:var(--ink-3);">3 项变更待确认</span>
+    </div>
+    <div class="diff-row">
+      <div><span class="diff-src">tmp_scraps/</span><span class="diff-arr">→</span><span class="diff-dst">archive/2026/tmp-scraps/</span></div>
+      <span class="diff-tag">归组</span>
+    </div>
+    <div class="diff-row">
+      <div><span class="diff-src">untitled-agent/</span><span class="diff-arr">→</span><span class="diff-dst">wonderwall-agent-core/</span></div>
+      <span class="diff-tag">重命名</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px;">
+      <span style="font-size:12px;color:var(--accent);">✓ 整体回滚保护已开启</span>
+      <button class="pill p0" style="height:28px;font-size:12px;">应用提案</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="nav-back">
+  <a href="01-design-tokens-and-typography.html">← 上一页: 01 Design Tokens & Typography</a>
+  <a href="03-restraint-and-pathology.html">下一页: 03 克制与模型病理范例 →</a>
+</div>
+
+</body>
+</html>

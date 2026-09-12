@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo 01 · 媒体库海报墙与工作区 · Pioneer Desktop Assistant</title>
+<style>
+/* ==========================================================================
+   Apple HIG × Opencode 设计变量系统 (Design Tokens)
+   ========================================================================== */
+:root {
+  --canvas:           #FDFCFC;
+  --surface:          #F5F5F7;
+  --surface-2:        #F8F7F7;
+  --surface-elevated: #FFFFFF;
+
+  --ink:              #1D1D1F;
+  --ink-2:            #6E6E73;
+  --ink-3:            #86868B;
+
+  --line:             #E0DEDE;
+  --line-subtle:      #EBEAEA;
+  --line-strong:      #4B4646;
+
+  --accent:           #0071E3;
+  --accent-hover:     #0066CC;
+  --accent-light:     #EBF5FF;
+  --accent-focus:     rgba(0, 113, 227, 0.25);
+
+  --success:          #34C759;
+  --success-bg:       #EBF8EE;
+  --warning:          #FF9500;
+  --warning-bg:       #FFF7EB;
+  --danger:           #FF3B30;
+  --danger-bg:        #FFF2F1;
+
+  --dark-canvas:      #0E0D0D;
+  --dark-surface:     #161413;
+  --dark-surface-2:   #1E1C1B;
+  --dark-line:        #2E2A29;
+  --dark-line-strong: #3A3635;
+  --on-dark:          #FDFCFC;
+  --on-dark-2:        #8A8585;
+  --on-dark-3:        #5C5756;
+
+  --acrylic-light:    rgba(255, 255, 255, 0.86);
+  --drawer-backdrop:  rgba(0, 0, 0, 0.45);
+
+  --font-sans: "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+               "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --font-mono: "Berkeley Mono", "IBM Plex Mono", "SF Mono", "JetBrains Mono",
+               "Sarasa Gothic SC", "Sarasa Mono SC", ui-monospace, Menlo, Consolas, monospace;
+}
+
+/* ==========================================================================
+   全局重置与 16:9 响应式舞台引擎
+   ========================================================================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--dark-canvas);
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.stage-viewport {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--dark-canvas);
+  overflow: hidden;
+}
+
+.stage {
+  position: absolute;
+  width: 1920px;
+  height: 1080px;
+  background: var(--canvas);
+  transform-origin: center center;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+/* 按钮与通用胶囊规范 */
+.btn-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  user-select: none;
+  border: 1px solid transparent;
+  text-decoration: none;
+}
+.btn-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.btn-pill.p0 {
+  background: var(--accent);
+  color: #FFFFFF;
+}
+.btn-pill.p0:hover {
+  background: var(--accent-hover);
+}
+.btn-pill.p1 {
+  background: var(--surface-elevated);
+  border-color: var(--line);
+  color: var(--ink);
+}
+.btn-pill.p1:hover {
+  background: var(--surface);
+  border-color: #B4B4B9;
+}
+
+.badge-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--line);
+  background: var(--surface-elevated);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.badge-capsule.success {
+  background: var(--success-bg);
+  border-color: rgba(52, 199, 89, 0.3);
+  color: #1E7E34;
+}
+.badge-capsule.warning {
+  background: var(--warning-bg);
+  border-color: rgba(255, 149, 0, 0.3);
+  color: #B26A00;
+}
+.badge-capsule.accent {
+  background: var(--accent-light);
+  border-color: rgba(0, 113, 227, 0.25);
+  color: var(--accent);
+}
+.badge-capsule.dark {
+  background: var(--dark-surface-2);
+  border-color: var(--dark-line);
+  color: var(--on-dark-2);
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ink-3);
+  display: inline-block;
+}
+.status-dot.green {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(52, 199, 89, 0.5);
+}
+.status-dot.blue {
+  background: var(--accent);
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.5);
+}
+
+/* ==========================================================================
+   顶栏视窗条 (App Topbar)
+   ========================================================================== */
+.app-topbar {
+  height: 52px;
+  min-height: 52px;
+  background: var(--acrylic-light);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  user-select: none;
+  z-index: 100;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.traffic-light.close { background: #FF5F56; border: 1px solid #E0443E; }
+.traffic-light.min { background: #FFBD2E; border: 1px solid #DEA123; }
+.traffic-light.max { background: #27C93F; border: 1px solid #1AAB29; }
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+  text-decoration: none;
+}
+.app-brand svg {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+.app-brand span { color: var(--accent); }
+.brand-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+}
+
+.topbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.workspace-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+.workspace-pill b {
+  color: var(--ink);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.model-runtime-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   海报墙主容器与头条 (Poster Wall Container)
+   ========================================================================== */
+.poster-wall-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 48px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.wall-header-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 18px;
+}
+.wall-title-box h1 {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--ink);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.wall-title-box p {
+  font-size: 14px;
+  color: var(--ink-2);
+}
+
+.wall-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px;
+}
+.filter-btn {
+  padding: 5px 13px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  transition: all 0.15s;
+}
+.filter-btn.active {
+  background: var(--surface-elevated);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+.search-input-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  height: 32px;
+  background: var(--surface-elevated);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  width: 220px;
+}
+.search-input-box svg {
+  width: 14px;
+  height: 14px;
+  color: var(--ink-3);
+}
+.search-input-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  color: var(--ink);
+  width: 100%;
+}
+.search-input-box input::placeholder {
+  color: var(--ink-3);
+}
+
+/* ==========================================================================
+   6 张高保真项目海报卡片网格 (#posterGrid)
+   ========================================================================== */
+.poster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+}
+
+.poster-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s, box-shadow 0.2s;
+  cursor: pointer;
+  position: relative;
+}
+.poster-card:hover {
+  transform: translateY(-3px);
+  border-color: #B4B4B9;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.05);
+}
+
+.poster-cover {
+  height: 140px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+.poster-cover svg.cover-graphic {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.cover-overlay-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.poster-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+.poster-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+.poster-title {
+  font-family: var(--font-mono);
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.3px;
+}
+.poster-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-2);
+  flex: 1;
+}
+
+.poster-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.poster-footer {
+  padding: 12px 20px;
+  background: var(--surface-2);
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.episode-counter {
+  color: var(--ink-2);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.episode-counter svg {
+  width: 12px;
+  height: 12px;
+  color: var(--accent);
+}
+.enter-action {
+  color: var(--accent);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: gap 0.15s;
+}
+.poster-card:hover .enter-action {
+  gap: 7px;
+}
+
+/* ==========================================================================
+   抽屉系统: 刮削整理提案抽屉 (#cleanupDrawer)
+   ========================================================================== */
+.drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--drawer-backdrop);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.drawer-overlay.open {
+  display: flex;
+  opacity: 1;
+}
+
+.drawer-body-box {
+  width: 640px;
+  height: 100%;
+  background: var(--surface-elevated);
+  box-shadow: -12px 0 36px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.drawer-overlay.open .drawer-body-box {
+  transform: translateX(0);
+}
+
+.drawer-head {
+  height: 56px;
+  padding: 0 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+.drawer-head h2 {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.drawer-close-btn {
+  background: none;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink-3);
+  font-size: 18px;
+  transition: all 0.15s;
+}
+.drawer-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  color: var(--ink);
+}
+
+.drawer-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.proposal-item {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+}
+.proposal-path-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.old-path {
+  color: var(--ink-3);
+  text-decoration: line-through;
+}
+.path-arrow {
+  color: var(--accent);
+  font-weight: 700;
+}
+.new-path {
+  color: var(--ink);
+  font-weight: 600;
+}
+.proposal-reason {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.drawer-foot {
+  height: 64px;
+  padding: 0 28px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--surface);
+}
+
+/* 全局底部微型状态栏 */
+.global-statusbar {
+  height: 32px;
+  min-height: 32px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  padding: 0 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  user-select: none;
+}
+.statusbar-left, .statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.statusbar-highlight {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* 轻量 Toast 提示系统 */
+.toast-shelf {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.toast-msg {
+  background: rgba(22, 20, 19, 0.9);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 8px 20px;
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: toastPop 3s forwards;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+@keyframes toastPop {
+  0% { opacity: 0; transform: translateY(10px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-8px); }
+}
+</style>
+</head>
+<body>
+
+<div class="stage-viewport">
+  <main class="stage" id="mainStage">
+
+    <!-- 顶栏视窗条 -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <div class="traffic-lights">
+          <div class="traffic-light close" onclick="showToast('macOS 窗口关闭模拟')"></div>
+          <div class="traffic-light min" onclick="showToast('macOS 窗口最小化模拟')"></div>
+          <div class="traffic-light max" onclick="toggleFullScreen()"></div>
+        </div>
+        <a href="./00-pioneer-workbench.html" class="app-brand" title="返回主工作台">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+          Pioneer <span>Bookshelf</span>
+          <span class="brand-badge">Demo 01</span>
+        </a>
+      </div>
+
+      <div class="topbar-center">
+        <div class="workspace-pill">
+          工作区: <b>D:\Project</b> (14 个项目识别 · 6 个活跃)
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="model-runtime-pill">
+          <span class="status-dot green"></span>
+          Qwen3.6-27B · local
+        </div>
+        <button class="btn-pill p0" id="openCleanBtn" onclick="openDrawer('scraping')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+          </svg>
+          一键整理工作区提案
+        </button>
+      </div>
+    </header>
+
+    <!-- 海报墙主容器 -->
+    <div class="poster-wall-container">
+      <div class="wall-header-strip">
+        <div class="wall-title-box">
+          <h1>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+              <line x1="7" y1="2" x2="7" y2="22"></line>
+              <line x1="17" y1="2" x2="17" y2="22"></line>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+            </svg>
+            媒体库 · 本地工作区海报墙
+          </h1>
+          <p>自动刮削本地 Git 仓库、开发草稿与设计素材，点选卡片直接进入带上下文的执行会话。</p>
+        </div>
+
+        <div class="wall-toolbar">
+          <div class="filter-pills">
+            <button class="filter-btn active" onclick="filterPosters('all', this)">全部 (6)</button>
+            <button class="filter-btn" onclick="filterPosters('gd', this)">毕设主线 (2)</button>
+            <button class="filter-btn" onclick="filterPosters('core', this)">调度内核 (2)</button>
+            <button class="filter-btn" onclick="filterPosters('tool', this)">评测工具 (2)</button>
+          </div>
+          <div class="search-input-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <input type="text" id="searchInput" placeholder="搜索本地工程 / 标签..." oninput="searchPosters(this.value)">
+          </div>
+        </div>
+      </div>
+
+      <!-- 6 个高保真项目海报卡片网格 (#posterGrid / .bookshelf-grid) -->
+      <div class="poster-grid bookshelf-grid" id="posterGrid">
+
+        <!-- 卡片 1: demo-thesis-2027 -->
+        <article class="poster-card project-card" data-category="gd" data-proj-id="demo-thesis-2027" onclick="window.location.href='02-session-intent-card.html?project=demo-thesis-2027'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #0A2540 0%, #0071E3 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <rect x="20" y="20" width="200" height="80" rx="8" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="4 4"></rect>
+              <circle cx="120" cy="60" r="28" fill="rgba(255,255,255,0.1)"></circle>
+              <text x="120" y="65" text-anchor="middle" fill="#FFFFFF" font-family="var(--font-mono)" font-size="14" font-weight="700">GD-2027</text>
+            </svg>
+            <span class="cover-overlay-badge">刚刚活跃</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">demo-thesis-2027</h3>
+              <span class="badge-capsule success">Git Clean</span>
+            </div>
+            <p class="poster-desc proj-desc">面向多模型自适应的任务助理 Agent 系统 (Pioneer)。包含开题 PPT、设计规范与双端状态层。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">React</span>
+              <span class="badge-capsule">TypeScript</span>
+              <span class="badge-capsule">TS</span>
+              <span class="badge-capsule">HTML5</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-demo-thesis-2027">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 4 集 · 自动化已沉淀
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+        <!-- 卡片 2: pioneer-agent-core -->
+        <article class="poster-card project-card" data-category="core" data-proj-id="pioneer-agent-core" onclick="window.location.href='02-session-intent-card.html?project=pioneer-agent-core'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #1C1917 0%, #44403C 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <path d="M40 60 H200 M120 20 V100" stroke="rgba(255,255,255,0.15)" stroke-width="2"></path>
+              <polygon points="120,35 150,85 90,85" stroke="#34C759" stroke-width="2" fill="none"></polygon>
+              <text x="120" y="65" text-anchor="middle" fill="#FDFCFC" font-family="var(--font-mono)" font-size="13" font-weight="700">PI-CORE</text>
+            </svg>
+            <span class="cover-overlay-badge">Git Clean · 3小时前</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">pioneer-agent-core</h3>
+              <span class="badge-capsule warning">2 Uncommitted</span>
+            </div>
+            <p class="poster-desc proj-desc">Pi 极简微内核调度总线，支持 Append-Only 会话树 DAG 拓扑与毫秒级工具执行流。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">Rust</span>
+              <span class="badge-capsule">Python 3.12</span>
+              <span class="badge-capsule">EventBus</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-pioneer-agent-core">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 14 集 · 调度内核强化
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+        <!-- 卡片 3: local-rag-indexer -->
+        <article class="poster-card project-card" data-category="core" data-proj-id="local-rag-indexer" onclick="window.location.href='02-session-intent-card.html?project=local-rag-indexer'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <circle cx="60" cy="60" r="16" stroke="#0071E3" stroke-width="2"></circle>
+              <circle cx="120" cy="40" r="16" stroke="#34C759" stroke-width="2"></circle>
+              <circle cx="180" cy="70" r="16" stroke="#FF9500" stroke-width="2"></circle>
+              <line x1="76" y1="60" x2="104" y2="40" stroke="rgba(255,255,255,0.2)"></line>
+              <line x1="136" y1="40" x2="164" y2="70" stroke="rgba(255,255,255,0.2)"></line>
+            </svg>
+            <span class="cover-overlay-badge">昨天活跃</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">local-rag-indexer</h3>
+              <span class="badge-capsule success">Git Clean</span>
+            </div>
+            <p class="poster-desc proj-desc">本地代码库与材料向量刮削索引，支持 AST 语法感知与语义-路径混合检索通道。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">Python</span>
+              <span class="badge-capsule">FastAPI</span>
+              <span class="badge-capsule">Qdrant Local</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-local-rag-indexer">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 3 集 · 索引向量构建
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+        <!-- 卡片 4: prompt-eval-bench -->
+        <article class="poster-card project-card" data-category="tool" data-proj-id="prompt-eval-bench" onclick="window.location.href='02-session-intent-card.html?project=prompt-eval-bench'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #311042 0%, #6B21A8 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <rect x="40" y="40" width="30" height="50" fill="rgba(255,255,255,0.3)"></rect>
+              <rect x="85" y="25" width="30" height="65" fill="#5AC8FA"></rect>
+              <rect x="130" y="55" width="30" height="35" fill="rgba(255,255,255,0.3)"></rect>
+              <rect x="175" y="15" width="30" height="75" fill="#34C759"></rect>
+            </svg>
+            <span class="cover-overlay-badge">3天前活跃</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">prompt-eval-bench</h3>
+              <span class="badge-capsule success">Git Clean</span>
+            </div>
+            <p class="poster-desc proj-desc">模型病理与防早停评测台，针对 Qwen / DeepSeek 的长路径递归早停对照实验。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">React</span>
+              <span class="badge-capsule">Vite</span>
+              <span class="badge-capsule">Tau2-Bench</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-prompt-eval-bench">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 5 集 · 评测用例集更新
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+        <!-- 卡片 5: wonderwall-media-engine -->
+        <article class="poster-card project-card" data-category="gd" data-proj-id="wonderwall-media-engine" onclick="window.location.href='02-session-intent-card.html?project=wonderwall-media-engine'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #1E293B 0%, #0F766E 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <circle cx="120" cy="60" r="32" stroke="#2DD4BF" stroke-width="2.5"></circle>
+              <polygon points="112,48 134,60 112,72" fill="#2DD4BF"></polygon>
+            </svg>
+            <span class="cover-overlay-badge">5天前活跃</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">wonderwall-media-engine</h3>
+              <span class="badge-capsule warning">1 Uncommitted</span>
+            </div>
+            <p class="poster-desc proj-desc">海报资产刮削与元数据提取器，规范化路径重命名与本地封面缓存生成器。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">C++</span>
+              <span class="badge-capsule">Python</span>
+              <span class="badge-capsule">FFmpeg</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-wonderwall-media-engine">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 2 集 · 刮削规则扩充
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+        <!-- 卡片 6: design-system-tokens -->
+        <article class="poster-card project-card" data-category="tool" data-proj-id="design-system-tokens" onclick="window.location.href='02-session-intent-card.html?project=design-system-tokens'">
+          <div class="poster-cover" style="background: linear-gradient(135deg, #27272A 0%, #18181B 100%);">
+            <svg class="cover-graphic" viewBox="0 0 240 120" fill="none">
+              <circle cx="90" cy="60" r="22" stroke="#0071E3" stroke-width="2"></circle>
+              <rect x="130" y="38" width="44" height="44" rx="10" stroke="#F5F5F7" stroke-width="2"></rect>
+            </svg>
+            <span class="cover-overlay-badge">1周前活跃</span>
+          </div>
+          <div class="poster-body">
+            <div class="poster-title-row card-top">
+              <h3 class="poster-title proj-title">design-system-tokens</h3>
+              <span class="badge-capsule success">Git Clean</span>
+            </div>
+            <p class="poster-desc proj-desc">Apple HIG × Opencode 双轨设计系统规范，4px 基础网格发丝线组件与字体层级基线。</p>
+            <div class="poster-tags">
+              <span class="badge-capsule">CSS3</span>
+              <span class="badge-capsule">SVG Icons</span>
+              <span class="badge-capsule">HIG Tokens</span>
+            </div>
+          </div>
+          <div class="poster-footer proj-foot">
+            <span class="episode-counter" id="ep-design-system-tokens">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              第 8 集 · 样式基线锁定
+            </span>
+            <span class="enter-action">进入会话 →</span>
+          </div>
+        </article>
+
+      </div>
+    </div>
+
+    <!-- 全局底部微型状态栏 -->
+    <footer class="global-statusbar">
+      <div class="statusbar-left">
+        <span>工作区状态: <b class="statusbar-highlight">D:\Project</b> (14 个项目识别 · 6 个活跃)</span>
+        <span>安全快照池: <b class="statusbar-highlight">#SNAP-20260903-01 就绪</b></span>
+      </div>
+      <div class="statusbar-right">
+        <span>当前模型: <b class="statusbar-highlight">Qwen3.6-27B (local)</b></span>
+        <span>快捷键: <kbd>Alt+0..4</kbd> 页面切换 / <kbd>Esc</kbd> 退出抽屉</span>
+      </div>
+    </footer>
+
+    <!-- 刮削整理提案抽屉 (#cleanupDrawer / #drawer) -->
+    <div class="drawer-overlay" id="cleanupDrawer">
+      <div class="drawer-body-box">
+        <div class="drawer-head">
+          <h2>整理闸门 · 规范命名与路径重组提案</h2>
+          <button class="drawer-close-btn" id="closeDrawer" onclick="closeDrawer('scraping')" title="关闭 (Esc)">&times;</button>
+        </div>
+        <div class="drawer-content-scroll">
+          <div style="font-size:13.5px;color:var(--ink-2);line-height:1.5;">
+            Agent 已自动扫描识别出 3 项可优化文件与草稿路径，提供全量路径级 Diff 预览。点击批准后将执行原子移动，并生成安全回滚快照。
+          </div>
+          <div class="proposal-item">
+            <div class="proposal-path-row">
+              <span class="old-path">tmp_speech_assets/</span>
+              <span class="path-arrow">→</span>
+              <span class="new-path">assets/audio/2026-09/</span>
+            </div>
+            <div class="proposal-reason">原因：识别为离线 TTS 临时测试片段，归入音频资产目录。</div>
+          </div>
+          <div class="proposal-item">
+            <div class="proposal-path-row">
+              <span class="old-path">paper-drafts-kaiti/</span>
+              <span class="path-arrow">→</span>
+              <span class="new-path">docs/paper/kaiti/</span>
+            </div>
+            <div class="proposal-reason">原因：规范文档层级，统一归入毕业设计文档总目录。</div>
+          </div>
+          <div class="proposal-item">
+            <div class="proposal-path-row">
+              <span class="old-path">scratch_test_0902.py</span>
+              <span class="path-arrow">→</span>
+              <span class="new-path">scripts/scratch/test_0902.py</span>
+            </div>
+            <div class="proposal-reason">原因：根目录单文件脚本移入开发脚本临时区。</div>
+          </div>
+        </div>
+        <div class="drawer-foot">
+          <span style="font-size:12.5px;color:var(--accent);font-family:var(--font-mono);font-weight:600;">✓ 100% 可逆保障 · 零误删承诺</span>
+          <div style="display:flex;gap:10px;">
+            <button class="btn-pill p1" onclick="closeDrawer('scraping')">取消 [Esc]</button>
+            <button class="btn-pill p0" id="confirmScrapingBtn" onclick="confirmScrapingProposal()">确认应用提案 [Enter]</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 轻量 Toast 提示挂载区 -->
+    <div class="toast-shelf" id="toastShelf"></div>
+
+  </main>
+</div>
+
+<!-- ====================================================================
+     Pioneer Universal Quick Switcher HUD (Apple HIG x Opencode)
+     ==================================================================== -->
+<style id="pioneer-nav-hud-style">
+.pioneer-nav-hud {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 99999;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 38px;
+  padding: 3px 6px;
+  background: rgba(18, 17, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  user-select: none;
+  font-family: "SF Mono", "Sarasa Mono SC", "JetBrains Mono", Menlo, Consolas, monospace;
+}
+.pioneer-hud-brand {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #FDFCFC;
+  letter-spacing: 0.5px;
+}
+.pioneer-hud-brand .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #0071E3;
+  box-shadow: 0 0 6px rgba(0, 113, 227, 0.8);
+}
+.pioneer-hud-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.15);
+  margin: 0 2px;
+}
+.pioneer-hud-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.pioneer-hud-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(253, 253, 252, 0.72);
+  text-decoration: none;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.pioneer-hud-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FDFCFC;
+  transform: translateY(-1px);
+}
+.pioneer-hud-link.active {
+  background: #0071E3;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.45);
+  cursor: default;
+  transform: none;
+}
+.pioneer-hud-link kbd {
+  font-size: 9px;
+  opacity: 0.55;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 400;
+}
+.pioneer-hud-link.active kbd {
+  background: rgba(255, 255, 255, 0.25);
+  opacity: 0.85;
+}
+</style>
+
+<nav class="pioneer-nav-hud" id="pioneerNavHUD" aria-label="原型快速切换导航">
+  <div class="pioneer-hud-brand">
+    <span class="dot"></span>
+    <span>PIONEER</span>
+  </div>
+  <div class="pioneer-hud-divider"></div>
+  <div class="pioneer-hud-links">
+    <a href="./00-pioneer-workbench.html" class="pioneer-hud-link" id="hud-link-00" title="快捷键: Alt+0">
+      <span>🚀 主工作台</span><kbd>0</kbd>
+    </a>
+    <a href="./01-bookshelf-workspace.html" class="pioneer-hud-link active" id="hud-link-01" title="快捷键: Alt+1">
+      <span>🎬 媒体库海报墙</span><kbd>1</kbd>
+    </a>
+    <a href="./02-session-intent-card.html" class="pioneer-hud-link" id="hud-link-02" title="快捷键: Alt+2">
+      <span>⚡ 任务会话</span><kbd>2</kbd>
+    </a>
+    <a href="./03-wrapup-and-gallery.html" class="pioneer-hud-link" id="hud-link-03" title="快捷键: Alt+3">
+      <span>📦 成果画廊</span><kbd>3</kbd>
+    </a>
+    <a href="./04-ppt-presentation-demo.html" class="pioneer-hud-link" id="hud-link-04" title="快捷键: Alt+4">
+      <span>📑 答辩幻灯片</span><kbd>4</kbd>
+    </a>
+  </div>
+</nav>
+
+<script>
+/**
+ * -------------------------------------------------------------------------
+ * 1. 16:9 黄金比例响应式舞台引擎
+ * -------------------------------------------------------------------------
+ */
+function resizeStage() {
+  const stage = document.getElementById('mainStage');
+  if (!stage) return;
+  const targetW = 1920;
+  const targetH = 1080;
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const scale = Math.min(w / targetW, h / targetH);
+  stage.style.transform = `scale(${scale})`;
+}
+window.addEventListener('resize', resizeStage);
+window.addEventListener('DOMContentLoaded', resizeStage);
+
+/**
+ * -------------------------------------------------------------------------
+ * 2. 抽屉控制与安全快照生成
+ * -------------------------------------------------------------------------
+ */
+function openDrawer(drawerId) {
+  const drawer = document.getElementById('cleanupDrawer');
+  if (drawer) drawer.classList.add('open');
+}
+
+function closeDrawer(drawerId) {
+  const drawer = document.getElementById('cleanupDrawer');
+  if (drawer) drawer.classList.remove('open');
+}
+
+function confirmScrapingProposal() {
+  closeDrawer('scraping');
+  showToast('✔ 整理提案已批准执行！已生成原子安全快照 #SNAP-20260903-01，支持随时一键回滚。');
+  return { snapshotId: '#SNAP-20260903-01', success: true };
+}
+
+// 抽屉遮罩与 Escape 键监听
+document.getElementById('cleanupDrawer').addEventListener('click', function(e) {
+  if (e.target === this) {
+    closeDrawer('scraping');
+  }
+});
+
+window.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeDrawer('scraping');
+  }
+});
+
+/**
+ * -------------------------------------------------------------------------
+ * 3. 海报过滤与搜索
+ * -------------------------------------------------------------------------
+ */
+function filterPosters(category, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const cards = document.querySelectorAll('.poster-card');
+  cards.forEach(card => {
+    if (category === 'all' || card.dataset.category === category) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+function searchPosters(query) {
+  const q = (query || '').toLowerCase().trim();
+  const cards = document.querySelectorAll('.poster-card');
+  cards.forEach(card => {
+    const text = card.innerText.toLowerCase();
+    if (!q || text.includes(q)) {
+      card.style.display = 'flex';
+    } else {
+      card.style.display = 'none';
+    }
+  });
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 4. Toast 轻量提示与全屏辅助
+ * -------------------------------------------------------------------------
+ */
+function showToast(message) {
+  const shelf = document.getElementById('toastShelf');
+  if (!shelf) return;
+  const toast = document.createElement('div');
+  toast.className = 'toast-msg';
+  toast.innerHTML = `<span class="status-dot green"></span><span>${message}</span>`;
+  shelf.appendChild(toast);
+  setTimeout(() => {
+    toast.remove();
+  }, 3000);
+}
+
+function toggleFullScreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  }
+}
+
+/**
+ * -------------------------------------------------------------------------
+ * 5. 全局键盘快捷键 (Alt+0 ~ Alt+4 秒级直达)
+ * -------------------------------------------------------------------------
+ */
+window.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.altKey && !e.ctrlKey && !e.metaKey) {
+    if (e.key === '0') window.location.href = './00-pioneer-workbench.html';
+    if (e.key === '1') window.location.href = './01-bookshelf-workspace.html';
+    if (e.key === '2') window.location.href = './02-session-intent-card.html';
+    if (e.key === '3') window.location.href = './03-wrapup-and-gallery.html';
+    if (e.key === '4') window.location.href = './04-ppt-presentation-demo.html';
+  }
+});
+</script>
+
+</body>
+</html>
