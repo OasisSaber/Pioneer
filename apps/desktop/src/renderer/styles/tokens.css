@@ -1,0 +1,13 @@
+/* Neutral engineering fallback only. Approved Figma tokens replace these values after explicit handoff. */
+:root {
+  --pioneer-background: #f7f7f6;
+  --pioneer-surface: #ffffff;
+  --pioneer-surface-muted: #efefed;
+  --pioneer-border: #ccccca;
+  --pioneer-foreground: #20201f;
+  --pioneer-focus: #245d93;
+  --pioneer-muted: #62625f;
+  --pioneer-notice: #f2ead1;
+  --pioneer-radius: 0.5rem;
+  --pioneer-space: 1rem;
+}

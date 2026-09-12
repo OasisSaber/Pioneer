@@ -1,0 +1,243 @@
+:root {
+  background: var(--pioneer-background);
+  color: var(--pioneer-foreground);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.tab-strip {
+  background: var(--pioneer-surface);
+  border-bottom: 1px solid var(--pioneer-border);
+  display: flex;
+  gap: 0.25rem;
+  overflow-x: auto;
+  padding: 0.5rem var(--pioneer-space) 0;
+}
+
+.tab-strip__item {
+  align-items: stretch;
+  display: flex;
+  flex: 0 0 auto;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  background: transparent;
+  border: 1px solid var(--pioneer-border);
+  color: inherit;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+}
+
+button:hover {
+  background: var(--pioneer-surface-muted);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--pioneer-focus);
+  outline-offset: 2px;
+}
+
+.tab-strip__tab {
+  border-bottom: 0;
+  border-radius: var(--pioneer-radius) var(--pioneer-radius) 0 0;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tab-strip__tab[aria-selected='true'] {
+  background: var(--pioneer-background);
+  border-color: var(--pioneer-border);
+  font-weight: 650;
+}
+
+.tab-strip__close {
+  border-bottom: 0;
+  border-left: 0;
+  border-radius: 0 var(--pioneer-radius) 0 0;
+  padding-inline: 0.6rem;
+}
+
+.workspace-panel {
+  min-width: 0;
+  overflow: auto;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.workspace-panel h1 {
+  margin-block: 0 0.25rem;
+}
+
+.library,
+.project-overview,
+.settings-view,
+.empty-state {
+  margin-inline: auto;
+  max-width: 84rem;
+}
+
+.library__header {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pioneer-space);
+  justify-content: space-between;
+}
+
+.library__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.button {
+  background: var(--pioneer-surface);
+  border-radius: var(--pioneer-radius);
+}
+
+.button--primary {
+  background: var(--pioneer-foreground);
+  color: var(--pioneer-surface);
+}
+
+.button--primary:hover {
+  background: var(--pioneer-muted);
+}
+
+.catalog-notice {
+  background: var(--pioneer-notice);
+  border: 1px solid var(--pioneer-border);
+  border-radius: var(--pioneer-radius);
+  margin-block: var(--pioneer-space);
+  padding: 0.75rem var(--pioneer-space);
+}
+
+.catalog-notice p,
+.catalog-notice ul {
+  margin-block: 0.25rem;
+}
+
+.search-field {
+  display: grid;
+  gap: 0.25rem;
+  margin-block: var(--pioneer-space);
+  max-width: 28rem;
+}
+
+.search-field input {
+  background: var(--pioneer-surface);
+  border: 1px solid var(--pioneer-border);
+  border-radius: var(--pioneer-radius);
+  color: inherit;
+  min-width: 0;
+  padding: 0.6rem 0.75rem;
+}
+
+.poster-grid {
+  display: grid;
+  gap: var(--pioneer-space);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+}
+
+.project-poster {
+  min-width: 0;
+}
+
+.project-poster__button {
+  background: var(--pioneer-surface);
+  border-radius: var(--pioneer-radius);
+  display: grid;
+  height: 100%;
+  overflow: hidden;
+  padding: 0;
+  text-align: left;
+  width: 100%;
+}
+
+.project-poster__cover {
+  aspect-ratio: 16 / 9;
+  background: linear-gradient(
+    135deg,
+    hsl(var(--cover-hue-a) 24% 72%),
+    hsl(var(--cover-hue-b) 22% 48%)
+  );
+  display: block;
+}
+
+.project-poster__body {
+  display: grid;
+  gap: 0.5rem;
+  padding: var(--pioneer-space);
+}
+
+.project-poster__name {
+  font-size: 1.05rem;
+}
+
+.project-poster__description,
+.project-poster__technologies,
+.project-poster__facts,
+.path-text {
+  color: var(--pioneer-muted);
+}
+
+.project-poster__facts {
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  gap: 0.25rem 0.75rem;
+}
+
+.path-text {
+  overflow-wrap: anywhere;
+}
+
+.eyebrow {
+  color: var(--pioneer-muted);
+  margin: 0;
+}
+
+.metadata-list {
+  display: grid;
+  gap: 0;
+  margin-block: 1.5rem;
+}
+
+.metadata-list div {
+  border-bottom: 1px solid var(--pioneer-border);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(8rem, 0.35fr) minmax(0, 1fr);
+  padding-block: 0.75rem;
+}
+
+.metadata-list dt {
+  font-weight: 650;
+}
+
+.metadata-list dd {
+  margin: 0;
+}
+
+@media (max-width: 36rem) {
+  .metadata-list div {
+    grid-template-columns: 1fr;
+  }
+}

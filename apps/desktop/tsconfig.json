@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "jsx": "react-jsx",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "target": "ES2023",
+    "lib": ["DOM", "ES2023"],
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "forge.config.ts", "webpack.*.config.ts"]
+}
