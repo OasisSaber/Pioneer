@@ -2,9 +2,9 @@
 
 Pioneer is a modular AI Agent interaction-system project moving from an M1 HTML design prototype into an Electron + React + TypeScript product.
 
-- Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the M2 read-only Electron foundation.
+- Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the completed M2 read-only Electron foundation plus the first M3 `Input → Intent Review → READY` vertical slice.
 - Historical visual references: frozen M1 HTML design references under [`demos/`](demos/README.md).
-- Current engineering milestone: M1.5 complete; M2 desktop foundation complete. Next: M3 design-contract synchronization and the Input → Intent Review → READY vertical slice.
+- Current engineering milestone: M3 is **IN PROGRESS**. The design-contract sync and first `Input → Intent Review → READY` slice are on `main`; next is `READY → Runtime Session bootstrap`.
 - Canonical repository: `OasisSaber/Pioneer`.
 - Canonical local checkout: `D:\Projects\Pioneer`.
 
@@ -17,9 +17,9 @@ pnpm install
 pnpm --filter @pioneer/desktop start
 ```
 
-The renderer in `apps/desktop` is an engineering fallback derived from the checked-in design specifications while the authoritative Figma handoff is pending. It is not represented as a completed Figma implementation.
+The renderer in `apps/desktop` now follows the approved Figma workspace contract for the implemented M3 Input / Intent Review slice. Figma `Pioneer · DEMO Lab` remains the visual interaction authority; later scenes are not claimed implemented until their own engineering slices land.
 
-The deterministic Real E2E seam injects a committed fixture root. The native directory picker remains outside that seam and requires separate manual evidence.
+The deterministic Real E2E seam injects a committed fixture root. The native directory picker remains outside that seam; its M2 human acceptance evidence is recorded separately and complete.
 
 ## Verification levels and commands
 

@@ -19,7 +19,7 @@
   - **Contract Tests**：`pnpm test:contract`，验证共享契约、路径、扫描器、IPC、安全边界、设置存储与 Tabs reducer。
   - **Prototype Tests**：`pnpm test:prototype`，冻结 M1 Prototype Tests 为 210/210；这是模拟器和探针证据，不是 Electron proof。
   - **Real E2E**：`pnpm test:e2e`，由 Playwright 启动真实 Electron，跨越 main → preload → renderer，并校验 fixture 不变性。
-  - `pnpm check` 依次执行格式、lint、类型检查、上述三层测试与最终 package smoke；M2 仍须通过独立审阅后才能标记完成。
+  - `pnpm check` 依次执行格式、lint、类型检查、上述三层测试与最终 package smoke；M2 已完成，M3 继续以该门禁作为主线质量基线。
 - **工作流规范**：
   - 采用 TheMasterplan 单一交付责任人机制，子代理可协助编码与调研，但主交付责任人统管最终 Diff 审阅、VCS 提交与人类交接；
   - 本地优先使用 `jj` 快照和变更描述（`jj describe`、`jj new`），通过 `main` 书签与远程 GitHub 保持同步；
@@ -39,7 +39,7 @@
 - [`TEST_INFRA.md`](TEST_INFRA.md) 是 Contract Tests、Prototype Tests、Real E2E 的验证分类和命令边界。
 - `pnpm test:contract`、`pnpm test:prototype` 与 `pnpm test:e2e` 都是可执行的真实命令，证据层级不可混用。
 - 原生目录选择器不在确定性 E2E fixture seam 内；没有穿越 Electron main → preload → renderer 的真实流程，不能宣称 Real E2E。
-- 原生目录选择器仍须人工验证；fixture seam 的通过不能替代该证据。
+- 原生目录选择器不属于确定性 E2E seam；M2 的人工验收证据已完成并保存在 `docs/testing/m2-native-picker-smoke.md`，后续 fixture seam 仍不得冒充该类人工证据。
 - 里程碑状态只以 [`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) 为准。
 - `demos/` 与 `tests/prototype/` 是冻结的 M1 参考实现与测试证据，其内嵌文案沿用当时的题目口径（「基于模块化架构的桌面任务助理 Agent 交互系统」），**不代表当前课题定位**。当前题目与定位以 [`选题收敛说明.md`](选题收敛说明.md) 为准，开题汇报以 Figma `Pioneer-PPT` 为权威源。
 
