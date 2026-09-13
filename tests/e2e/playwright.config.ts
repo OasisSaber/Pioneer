@@ -6,6 +6,7 @@ export default defineConfig({
     'pioneer.e2e.spec.ts',
     'tab-strip.e2e.spec.ts',
     'catalog-state.e2e.spec.ts',
+    'm3-intent.e2e.spec.ts',
   ],
   outputDir: 'test-output/artifacts',
   fullyParallel: false,
