@@ -47,7 +47,7 @@
 4. **`04 · Core Agent Page Demos`**：
    - Screen 1: GUI 书架与工作区首页 (Desktop 1440×900 / 1920×1080)；
    - Screen 2: 意图核对与执行会话页 (Desktop 1440×900 / 1920×1080)；
-   - Screen 3: 任务收尾与成果画廊页 (Desktop 1440×900 / 1920×1080)。
+   - Screen 3: 任务收尾与输出页 (Desktop 1440×900 / 1920×1080)。
 5. **`05 · Mobile & Headless Views`**：
    - 手机端远程审批与打断界面 (iPhone 16 Pro 393×852)；
    - 无头端状态与离线语音播报卡片。
