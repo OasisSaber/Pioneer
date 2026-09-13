@@ -17,7 +17,7 @@ export function bootstrapRuntimeSession(intent: unknown): RuntimeSessionResult {
 
   const approvedIntent = ReadyTaskIntentSchema.parse(parsedIntent.data);
   const session = RuntimeSessionSchema.parse({
-    id: `session:${approvedIntent.id}:r${approvedIntent.revision}`,
+    id: `session:${approvedIntent.id}:r${String(approvedIntent.revision)}`,
     projectId: approvedIntent.projectId,
     approvedIntent,
     status: 'initialized',

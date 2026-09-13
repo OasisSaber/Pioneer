@@ -67,7 +67,11 @@ describe('runtime session bootstrap', () => {
     if (!result.ok) return;
 
     source.instruction = 'mutated after bootstrap';
-    source.steps[0]!.summary = 'mutated step';
+    const firstSourceStep = source.steps[0];
+    if (firstSourceStep === undefined) {
+      throw new Error('Expected the ready intent fixture to contain a step.');
+    }
+    firstSourceStep.summary = 'mutated step';
 
     expect(result.value.approvedIntent.instruction).toBe(
       '执行已批准计划，但当前只初始化会话。',
