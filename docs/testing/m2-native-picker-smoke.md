@@ -51,7 +51,12 @@ Add a small `README.md` or `package.json` inside `alpha-project` and `beta-proje
 5. Confirm that `not-an-immediate-project` is **not** promoted to a separate top-level project card.
 6. Record the observed root path and visible project-card names.
 
-Status: **Pending human evidence**.
+Status: **PASS — human-observed**.
+
+Observed on Windows:
+- Selected root: `D:\Temp\PioneerPickerA`
+- Visible cards: `alpha-project`, `nested-container`
+- Nested project not promoted: yes
 
 ### G2 · Switching roots replaces the catalog
 
@@ -61,7 +66,13 @@ Status: **Pending human evidence**.
 4. Confirm that `beta-project` appears.
 5. Confirm that the `PioneerPickerA` cards disappear instead of being merged into the new catalog.
 
-Status: **Pending human evidence**.
+Status: **PASS — human-observed**.
+
+Observed on Windows:
+- Previous root: `D:\Temp\PioneerPickerA`
+- New root: `D:\Temp\PioneerPickerB`
+- Visible cards after switch: `beta-project`
+- Previous cards retained: no
 
 ### G3 · Unavailable-root recovery
 
@@ -74,7 +85,14 @@ Use a disposable root only:
 5. Confirm that the app reports the workspace root as unavailable without crashing or mutating another workspace.
 6. Use **Change workspace** to select a valid disposable root and confirm normal recovery.
 
-Status: **Pending human evidence**.
+Status: **PASS — human-observed**.
+
+Observed on Windows:
+- Remembered root renamed while app closed (`D:\Temp\PioneerPickerB.offline`)
+- Application reopened without crash
+- Unavailable-root state shown
+- Change workspace remained functional
+- Recovery root: `D:\Temp\PioneerPickerA`
 
 ### Acceptance boundary
 
