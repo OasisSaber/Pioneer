@@ -128,15 +128,23 @@ function parsePackageMetadata(
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
       throw new Error('not an object');
     const record = parsed as Record<string, unknown>;
-    const dependencies = record.dependencies;
-    const technologies =
-      typeof dependencies === 'object' &&
-      dependencies !== null &&
-      !Array.isArray(dependencies)
-        ? Object.keys(dependencies).sort((left, right) =>
-            left.localeCompare(right),
-          )
-        : [];
+    const dependencySections = [
+      record.dependencies,
+      record.devDependencies,
+      record.peerDependencies,
+      record.optionalDependencies,
+    ];
+    const technologies = [
+      ...new Set(
+        dependencySections.flatMap((dependencies) =>
+          typeof dependencies === 'object' &&
+          dependencies !== null &&
+          !Array.isArray(dependencies)
+            ? Object.keys(dependencies)
+            : [],
+        ),
+      ),
+    ].sort((left, right) => left.localeCompare(right));
     return {
       description:
         typeof record.description === 'string' && record.description.trim()
