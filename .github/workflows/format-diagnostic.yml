@@ -11,7 +11,7 @@ permissions:
 jobs:
   diagnose:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -22,12 +22,24 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Capture lint output
+      - name: Capture all gate outputs
         shell: pwsh
         run: |
-          pnpm lint *> gate-output.txt
-          $code = $LASTEXITCODE
-          "exit_code=$code" | Add-Content gate-output.txt
+          $commands = @(
+            @{ name = 'format'; command = 'pnpm format:check' },
+            @{ name = 'lint'; command = 'pnpm lint' },
+            @{ name = 'typecheck'; command = 'pnpm typecheck' },
+            @{ name = 'contract'; command = 'pnpm test:contract' },
+            @{ name = 'prototype'; command = 'pnpm test:prototype' },
+            @{ name = 'e2e'; command = 'pnpm test:e2e' },
+            @{ name = 'package-smoke'; command = 'pnpm package:smoke' }
+          )
+          foreach ($item in $commands) {
+            "===== $($item.name) =====" | Add-Content gate-output.txt
+            Invoke-Expression $item.command *>> gate-output.txt
+            "exit_code=$LASTEXITCODE" | Add-Content gate-output.txt
+            "" | Add-Content gate-output.txt
+          }
           exit 0
       - name: Upload diagnostic output
         uses: actions/upload-artifact@v4
