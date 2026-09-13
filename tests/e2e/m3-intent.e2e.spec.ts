@@ -106,7 +106,9 @@ test('keeps Input drafts isolated and persistent across project tabs', async ({}
       .fill('alpha 独立草稿');
 
     await page.getByRole('tab', { name: 'beta-notes' }).click();
-    await expect(page.getByRole('textbox', { name: '任务说明' })).toHaveValue('');
+    await expect(
+      page.getByRole('textbox', { name: '任务说明' }),
+    ).toHaveValue('');
     await page
       .getByRole('textbox', { name: '任务说明' })
       .fill('beta 独立草稿');
