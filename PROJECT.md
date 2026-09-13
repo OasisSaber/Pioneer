@@ -99,6 +99,17 @@ The canonical scene vocabulary is `输入 / 审阅 / 输出 / 自定`.
 
 See [`docs/design/M3-INTERACTION-CONTRACT.md`](docs/design/M3-INTERACTION-CONTRACT.md).
 
+## Approved M3 runtime-session bootstrap slice
+
+The next M3 slice consumes an already approved `TaskIntent.status = ready` and creates a local, serializable `RuntimeSession` bootstrap record.
+
+- Runtime bootstrap consumes the approved TaskIntent snapshot; it must not reinterpret the raw user instruction or silently regenerate the approved plan.
+- A bootstrapped session is only `initialized`. It does not imply model access, tool execution, project-file mutation, event streaming, or a running Agent process.
+- The bootstrap contract records all execution capabilities as disabled so later runtime work must cross an explicit new authorization boundary.
+- No new generic filesystem IPC or preload capability is introduced by this slice.
+
+See [`docs/design/M3-RUNTIME-SESSION-CONTRACT.md`](docs/design/M3-RUNTIME-SESSION-CONTRACT.md).
+
 ## M3 and later exclusions
 
-Workspace mutation or reorganization, reversible snapshots, Agent runtime execution, event streaming, session trees, plugin runtime integration, and freeform/dockable workspaces remain later M3/M4 work and require separate design, authorization, and verification.
+Workspace mutation or reorganization, reversible snapshots, actual Agent runtime execution, model/provider integration, tool execution, event streaming, session trees, plugin runtime integration, and freeform/dockable workspaces remain later M3/M4 work and require separate design, authorization, and verification.

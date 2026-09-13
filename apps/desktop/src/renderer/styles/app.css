@@ -649,6 +649,40 @@ input:focus-visible {
   color: var(--hazel-secondary);
 }
 
+.intent-terminal-state__actions,
+.runtime-capabilities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.runtime-session-grid {
+  display: grid;
+  gap: 0;
+}
+
+.runtime-session-grid > div {
+  border-top: 1px solid var(--hazel-line);
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr);
+  padding-block: 0.75rem;
+}
+
+.runtime-session-grid span {
+  color: var(--hazel-secondary);
+  font-size: 0.8125rem;
+}
+
+.runtime-capabilities strong {
+  background: var(--hazel-tool-surface);
+  border: 1px solid var(--hazel-line);
+  border-radius: 999px;
+  color: var(--hazel-secondary);
+  font-size: 0.75rem;
+  padding: 0.45rem 0.65rem;
+}
+
 @media (max-width: 64rem) {
   .input-compose-layout,
   .intent-review-layout {

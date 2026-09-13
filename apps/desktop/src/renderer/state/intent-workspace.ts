@@ -1,18 +1,26 @@
 import type {
+  RuntimeSession,
+  RuntimeSessionErrorCode,
+} from '../../shared/contracts/runtime-session';
+import type {
   IntentErrorCode,
   TaskIntent,
   TaskIntentStep,
 } from '../../shared/contracts/task-intent';
+import { bootstrapRuntimeSession } from '../../shared/runtime-session';
 import { transitionIntent } from '../../shared/task-intent';
 
-export type IntentWorkspacePhase = 'compose' | 'review' | 'ready' | 'cancelled';
+export type IntentWorkspacePhase =
+  'compose' | 'review' | 'ready' | 'session' | 'cancelled';
 
-export type IntentWorkspaceError = 'EMPTY_INSTRUCTION' | IntentErrorCode;
+export type IntentWorkspaceError =
+  'EMPTY_INSTRUCTION' | IntentErrorCode | RuntimeSessionErrorCode;
 
 export interface IntentWorkspaceState {
   phase: IntentWorkspacePhase;
   draftInstruction: string;
   intent: TaskIntent | null;
+  session: RuntimeSession | null;
   error: IntentWorkspaceError | null;
 }
 
@@ -21,6 +29,7 @@ export type IntentWorkspaceAction =
   | { type: 'SUBMIT'; projectId: string }
   | { type: 'EDIT' }
   | { type: 'CONFIRM' }
+  | { type: 'BOOTSTRAP_SESSION' }
   | { type: 'CANCEL' }
   | { type: 'RESET' };
 
@@ -28,6 +37,7 @@ export const initialIntentWorkspaceState = (): IntentWorkspaceState => ({
   phase: 'compose',
   draftInstruction: '',
   intent: null,
+  session: null,
   error: null,
 });
 
@@ -107,6 +117,7 @@ export function intentWorkspaceReducer(
         phase: 'review',
         draftInstruction: instruction,
         intent: submitted.value,
+        session: null,
         error: null,
       };
     }
@@ -115,7 +126,7 @@ export function intentWorkspaceReducer(
       if (state.intent?.status !== 'reviewing') {
         return failure(state, 'INVALID_TRANSITION');
       }
-      return { ...state, phase: 'compose', error: null };
+      return { ...state, phase: 'compose', session: null, error: null };
 
     case 'CONFIRM': {
       if (state.intent === null) return failure(state, 'INVALID_INTENT');
@@ -128,6 +139,19 @@ export function intentWorkspaceReducer(
         ...state,
         phase: 'ready',
         intent: confirmed.value,
+        session: null,
+        error: null,
+      };
+    }
+
+    case 'BOOTSTRAP_SESSION': {
+      if (state.intent === null) return failure(state, 'INVALID_INTENT');
+      const bootstrapped = bootstrapRuntimeSession(state.intent);
+      if (!bootstrapped.ok) return failure(state, bootstrapped.error);
+      return {
+        ...state,
+        phase: 'session',
+        session: bootstrapped.value,
         error: null,
       };
     }
@@ -143,6 +167,7 @@ export function intentWorkspaceReducer(
         ...state,
         phase: 'cancelled',
         intent: cancelled.value,
+        session: null,
         error: null,
       };
     }
