@@ -2,9 +2,9 @@
 
 Pioneer is a modular AI Agent interaction-system project moving from an M1 HTML design prototype into an Electron + React + TypeScript product.
 
-- Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the completed M2 read-only Electron foundation plus the first M3 `Input → Intent Review → READY` vertical slice.
+- Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the completed M2 read-only Electron foundation plus the M3 `Input → Intent Review → READY → Runtime Session` path and its local lifecycle-event skeleton.
 - Historical visual references: frozen M1 HTML design references under [`demos/`](demos/README.md).
-- Current engineering milestone: M3 is **IN PROGRESS**. The design-contract sync and first `Input → Intent Review → READY` slice are on `main`; next is `READY → Runtime Session bootstrap`.
+- Current engineering milestone: M3 is **IN PROGRESS**. `READY → Runtime Session bootstrap` is on `main`; this slice adds `INITIALIZED → START REQUESTED` with a deterministic local event stream while execution capabilities remain disabled.
 - Canonical repository: `OasisSaber/Pioneer`.
 - Canonical local checkout: `D:\Projects\Pioneer`.
 
