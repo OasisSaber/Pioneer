@@ -2,9 +2,9 @@
 
 ## Authority and current boundary
 
-[`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) is the sole authority for milestone status. M1.5 is complete. M2 is in progress, but no M2 feature is claimed complete.
+[`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) is the sole authority for milestone status. M1.5 and M2 are complete. M3 starts from the approved Figma workspace contract and the first `Input → Intent Review → READY` vertical slice.
 
-The current product implementation is the [`apps/desktop`](apps/desktop/) Electron + React + TypeScript application. It implements the M2 read-only desktop foundation; M2 remains in progress until the full quality gate and independent review pass.
+The current product implementation is the [`apps/desktop`](apps/desktop/) Electron + React + TypeScript application. M2 provides the completed read-only desktop foundation. M3 extends the renderer and shared task-intent domain without weakening the M2 filesystem or IPC boundaries.
 
 ## Approved M2 target: read-only workspace slice
 
@@ -27,7 +27,7 @@ The scanner must not recurse, execute workspace code, modify the selected root, 
 - `apps/desktop/src/shared` contains serializable contracts, fixed IPC channel names, schemas, and stable warning codes shared across process boundaries.
 - `tests/contract` exercises deterministic domain and process-boundary behavior. `tests/e2e` launches the actual Electron chain against `tests/fixtures/workspaces/library` and verifies that fixture tree is unchanged.
 
-The visual implementation is an engineering fallback pending the authoritative Figma handoff. Frozen demos and design specimens are references only and are not imported into the desktop runtime.
+The authoritative current workspace handoff is the Figma `Pioneer · DEMO Lab` page (`132:2`). For the first M3 slice, D03 `输入 / 新任务 Compose` (`135:258`) and D04 `输入 / 执行与批准` (`136:105`) define the interaction contract. Frozen HTML demos remain historical references only and are not imported into the desktop runtime.
 
 ## Formal desktop contracts
 
@@ -86,6 +86,19 @@ Pioneer/
 └── tests/repository/      # repository-policy gate
 ```
 
+## Approved M3 first vertical slice
+
+The canonical scene vocabulary is `输入 / 审阅 / 输出 / 自定`.
+
+- **输入** owns both task composition and pre-execution Intent Review. Intent Review is not the top-level **审阅** scene.
+- **审阅** is reserved for reviewing Agent-modified files and Diff after a future execution runtime exists.
+- **输出** is reserved for generated artifacts and the standard actions `打开 → 文件夹内打开 → 复制 → 复制路径`.
+- **自定** is reserved for user-composed workspace modules.
+- The first M3 vertical slice ends at TaskIntent status `ready`. It must not execute project code, mutate workspace files, start an Agent runtime, add generic filesystem IPC, or claim that approval caused execution.
+- TaskIntent transitions reuse the shared `draft → reviewing → ready` domain contract. Revision, cancellation, and stale-revision protections remain domain-owned rather than UI-owned.
+
+See [`docs/design/M3-INTERACTION-CONTRACT.md`](docs/design/M3-INTERACTION-CONTRACT.md).
+
 ## M3 and later exclusions
 
-M2 does not execute project code or provide arbitrary filesystem access. Workspace mutation or reorganization, reversible snapshots, task execution, intent approval, event streaming, session trees, plugin runtime integration, and freeform/dockable workspaces remain M3 or later work and require separate design, authorization, and verification.
+Workspace mutation or reorganization, reversible snapshots, Agent runtime execution, event streaming, session trees, plugin runtime integration, and freeform/dockable workspaces remain later M3/M4 work and require separate design, authorization, and verification.
