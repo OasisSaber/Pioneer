@@ -161,7 +161,7 @@ describe('CatalogService', () => {
     ]);
     expect(scan).toHaveBeenCalledTimes(1);
   });
-  it('validates a selected root before saving or scanning it', async () => {
+  it('validates and scans a selected root before persisting it', async () => {
     const calls: string[] = [];
     const { service, settings, scan } = createService({
       validateRoot: (rootPath) => {
@@ -183,8 +183,8 @@ describe('CatalogService', () => {
     );
     expect(calls).toEqual([
       `validate:${OTHER_ROOT}`,
-      `save:${OTHER_ROOT}`,
       `scan:${OTHER_ROOT}`,
+      `save:${OTHER_ROOT}`,
     ]);
     await expect(service.selectRoot('relative-path')).rejects.toThrow(
       'invalid workspace root',
@@ -222,18 +222,12 @@ describe('CatalogService', () => {
     );
     expect(service.getLastGoodCatalog()).toEqual(stale);
   });
-  it('converts an unexpected scanner failure into a stable unavailable-root result', async () => {
+  it('propagates an unexpected scanner failure without misclassifying it as root availability', async () => {
     const { service } = createService({
-      scan: () => Promise.reject(new Error('EACCES')),
+      scan: () => Promise.reject(new Error('scanner invariant failed')),
     });
 
-    const result = await service.getCatalog();
-    expect(result).toMatchObject({
-      rootPath: null,
-      projects: [],
-      warnings: [{ code: 'ROOT_UNAVAILABLE', path: ROOT }],
-    });
-    expect(typeof result.scannedAt).toBe('string');
+    await expect(service.getCatalog()).rejects.toThrow('scanner invariant failed');
   });
   it('shares one in-flight rescan promise', async () => {
     const next = deferred<CatalogResult>();
