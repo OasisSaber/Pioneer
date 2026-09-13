@@ -33,12 +33,13 @@ describe('CatalogService root transaction boundaries', () => {
     const service = new CatalogService({
       initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: async () => rootA,
-        saveRoot: async (rootPath) => {
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: (rootPath) => {
           saved.push(rootPath);
+          return Promise.resolve();
         },
       },
-      scan: async (rootPath) => unavailable(rootPath),
+      scan: (rootPath) => Promise.resolve(unavailable(rootPath)),
     });
 
     const result = await service.selectRoot(rootB);
@@ -54,14 +55,15 @@ describe('CatalogService root transaction boundaries', () => {
     const service = new CatalogService({
       initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: async () => rootA,
-        saveRoot: async (rootPath) => {
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: (rootPath) => {
           events.push(`save:${rootPath}`);
+          return Promise.resolve();
         },
       },
-      scan: async (rootPath) => {
+      scan: (rootPath) => {
         events.push(`scan:${rootPath}`);
-        return catalog(rootPath);
+        return Promise.resolve(catalog(rootPath));
       },
     });
 
@@ -74,12 +76,10 @@ describe('CatalogService root transaction boundaries', () => {
     const service = new CatalogService({
       initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: async () => rootA,
-        saveRoot: async () => undefined,
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: () => Promise.resolve(),
       },
-      scan: async () => {
-        throw new Error('scanner invariant failed');
-      },
+      scan: () => Promise.reject(new Error('scanner invariant failed')),
     });
 
     await expect(service.selectRoot(rootB)).rejects.toThrow(
@@ -92,10 +92,10 @@ describe('CatalogService root transaction boundaries', () => {
   it('converts an invalid remembered root into a recoverable unavailable state', async () => {
     const service = new CatalogService({
       settings: {
-        loadRoot: async () => 'relative-root',
-        saveRoot: async () => undefined,
+        loadRoot: () => Promise.resolve('relative-root'),
+        saveRoot: () => Promise.resolve(),
       },
-      scan: async (rootPath) => catalog(rootPath),
+      scan: (rootPath) => Promise.resolve(catalog(rootPath)),
       now: () => new Date('2026-09-13T00:00:00.000Z'),
     });
 
@@ -114,10 +114,10 @@ describe('CatalogService root transaction boundaries', () => {
     const service = new CatalogService({
       initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: async () => rootA,
-        saveRoot: async () => undefined,
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: () => Promise.resolve(),
       },
-      scan: async (rootPath) => unavailable(rootPath),
+      scan: (rootPath) => Promise.resolve(unavailable(rootPath)),
     });
 
     const result = await service.rescan();
