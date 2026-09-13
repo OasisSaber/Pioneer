@@ -19,10 +19,8 @@ const nonBlankString = (maxLength: number) =>
       }
     });
 
-export const runtimeEventId = (
-  sessionId: string,
-  sequence: number,
-): string => `${sessionId}:event:${String(sequence)}`;
+export const runtimeEventId = (sessionId: string, sequence: number): string =>
+  `${sessionId}:event:${String(sequence)}`;
 
 const RuntimeEventBaseSchema = z
   .object({
