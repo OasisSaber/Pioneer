@@ -22,26 +22,15 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Format quality-gate targets
-        run: >-
-          pnpm exec prettier --write
-          apps/desktop
-          tests/contract
-          tests/e2e
-          tests/helpers
-          package.json
-          pnpm-workspace.yaml
-          eslint.config.mjs
-          vitest.config.ts
-      - name: Capture formatter diff
-        shell: bash
+      - name: Capture format-check output
+        shell: pwsh
         run: |
-          git diff --name-only > prettier-files.txt
-          git diff --no-ext-diff > prettier.diff
-      - name: Upload formatter diff
+          pnpm format:check *> format-output.txt
+          $code = $LASTEXITCODE
+          "exit_code=$code" | Add-Content format-output.txt
+          exit 0
+      - name: Upload formatter output
         uses: actions/upload-artifact@v4
         with:
-          name: prettier-diff
-          path: |
-            prettier-files.txt
-            prettier.diff
+          name: prettier-check-output
+          path: format-output.txt
