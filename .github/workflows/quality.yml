@@ -44,5 +44,26 @@ jobs:
       - name: Verify repository normalization
         run: pnpm verify:repository
 
-      - name: Run full quality gate
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Contract tests
+        run: pnpm test:contract
+
+      - name: Prototype tests
+        run: pnpm test:prototype
+
+      - name: Electron E2E
+        run: pnpm test:e2e
+
+      - name: Package smoke
+        run: pnpm package:smoke
+
+      - name: Confirm aggregate quality command
         run: pnpm check
