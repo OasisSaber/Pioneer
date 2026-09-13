@@ -392,7 +392,9 @@ export function ProjectWorkspace({
             </div>
             <div>
               <span>批准意图</span>
-              <strong>REV {state.runtime.session.approvedIntent.revision}</strong>
+              <strong>
+                REV {state.runtime.session.approvedIntent.revision}
+              </strong>
             </div>
             <div>
               <span>生命周期</span>
@@ -411,7 +413,10 @@ export function ProjectWorkspace({
             <strong>工具执行：关闭</strong>
             <strong>文件写入：关闭</strong>
           </div>
-          <section className="runtime-event-stream" aria-label="Runtime event stream">
+          <section
+            className="runtime-event-stream"
+            aria-label="Runtime event stream"
+          >
             <div className="runtime-event-stream__header">
               <p className="eyebrow">LOCAL EVENT STREAM</p>
               <span>{state.runtime.events.length} EVENT(S)</span>
@@ -439,8 +444,8 @@ export function ProjectWorkspace({
           <div className="intent-terminal-state__summary">
             <strong>{state.runtime.session.approvedIntent.instruction}</strong>
             <span>
-              本地生命周期事件只表达状态边界，不代表模型、工具或 Agent
-              Runtime 已经运行。
+              本地生命周期事件只表达状态边界，不代表模型、工具或 Agent Runtime
+              已经运行。
             </span>
           </div>
           {error === null ? null : (
