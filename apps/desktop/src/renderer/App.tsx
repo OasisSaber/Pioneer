@@ -1,7 +1,7 @@
 import { useReducer } from 'react';
 
 import { ProjectLibrary } from './components/ProjectLibrary';
-import { ProjectOverview } from './components/ProjectOverview';
+import { ProjectWorkspace } from './components/ProjectWorkspace';
 import { SettingsView } from './components/SettingsView';
 import { TabStrip } from './components/TabStrip';
 import { useCatalog } from './hooks/use-catalog';
@@ -40,7 +40,7 @@ export const App = (): React.JSX.Element => {
               warnings={catalog.result?.warnings ?? []}
             />
           ) : (
-            <ProjectOverview project={activeTab.project} />
+            <ProjectWorkspace project={activeTab.project} />
           )}
         </section>
       )}
