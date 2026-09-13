@@ -22,6 +22,11 @@ export const ReadyTaskIntentSchema = TaskIntentSchema.extend({
   status: z.literal('ready'),
 }).strict();
 
+export const runtimeSessionIdForIntent = (intent: {
+  id: string;
+  revision: number;
+}): string => `session:${intent.id}:r${String(intent.revision)}`;
+
 export const RuntimeSessionCapabilitiesSchema = z
   .object({
     modelAccess: z.literal(false),
@@ -45,6 +50,14 @@ export const RuntimeSessionSchema = z
         code: 'custom',
         path: ['projectId'],
         message: 'Runtime session project must match the approved intent.',
+      });
+    }
+
+    if (session.id !== runtimeSessionIdForIntent(session.approvedIntent)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['id'],
+        message: 'Runtime session id must match the approved intent revision.',
       });
     }
   });

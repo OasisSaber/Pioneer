@@ -1,6 +1,7 @@
 import {
   ReadyTaskIntentSchema,
   RuntimeSessionSchema,
+  runtimeSessionIdForIntent,
   type RuntimeSessionResult,
 } from './contracts/runtime-session';
 import { TaskIntentSchema } from './contracts/task-intent';
@@ -17,7 +18,7 @@ export function bootstrapRuntimeSession(intent: unknown): RuntimeSessionResult {
 
   const approvedIntent = ReadyTaskIntentSchema.parse(parsedIntent.data);
   const session = RuntimeSessionSchema.parse({
-    id: `session:${approvedIntent.id}:r${String(approvedIntent.revision)}`,
+    id: runtimeSessionIdForIntent(approvedIntent),
     projectId: approvedIntent.projectId,
     approvedIntent,
     status: 'initialized',

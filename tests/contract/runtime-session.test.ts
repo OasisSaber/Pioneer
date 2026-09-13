@@ -79,6 +79,25 @@ describe('runtime session bootstrap', () => {
     expect(result.value.approvedIntent.steps[0]?.summary).toBe('锁定批准范围');
   });
 
+  it('rejects a session id that does not match the approved intent revision', () => {
+    const invalidSession: RuntimeSession = {
+      id: 'session:wrong:r999',
+      projectId: 'project-alpha',
+      approvedIntent: {
+        ...readyIntent(),
+        status: 'ready',
+      },
+      status: 'initialized',
+      capabilities: {
+        modelAccess: false,
+        toolExecution: false,
+        fileMutation: false,
+      },
+    };
+
+    expect(RuntimeSessionSchema.safeParse(invalidSession).success).toBe(false);
+  });
+
   it('rejects a session whose project does not match the approved intent', () => {
     const invalidSession: RuntimeSession = {
       id: 'session:intent:project-alpha:r2',
