@@ -81,11 +81,15 @@ export class CatalogService {
     this.initializationPromise = this.enqueue(async () => {
       const rememberedRoot = await this.options.settings.loadRoot();
       if (rememberedRoot === null) return this.latestResponse;
+
+      let normalizedRoot: string;
       try {
-        return await this.scanAndRecord(this.requireValidRoot(rememberedRoot));
+        normalizedRoot = this.requireValidRoot(rememberedRoot);
       } catch {
         return this.recordUnavailable(rememberedRoot);
       }
+
+      return this.scanAndRecord(normalizedRoot);
     }).finally(() => {
       this.initializationPromise = null;
     });
@@ -96,9 +100,13 @@ export class CatalogService {
     const normalizedRoot = this.requireValidRoot(rootPath);
     this.initialized = true;
     return this.enqueue(async () => {
+      const candidate = await this.scanCandidate(normalizedRoot);
+      if (hasUnavailableRoot(candidate)) return candidate;
+
+      // Persist only after a successful scan so a failed candidate cannot replace
+      // the last known-good root across application restarts.
       await this.options.settings.saveRoot(normalizedRoot);
-      this.activeRoot = normalizedRoot;
-      return this.scanAndRecord(normalizedRoot);
+      return this.recordSuccess(candidate);
     });
   }
 
@@ -149,17 +157,15 @@ export class CatalogService {
     return normalizeRootPath(rootPath);
   }
 
+  private async scanCandidate(rootPath: string): Promise<CatalogResult> {
+    return CatalogResultSchema.parse(await this.options.scan(rootPath));
+  }
+
   private async scanAndRecord(rootPath: string): Promise<CatalogResult> {
-    try {
-      const result = CatalogResultSchema.parse(
-        await this.options.scan(rootPath),
-      );
-      return hasUnavailableRoot(result)
-        ? this.recordUnavailable(rootPath, result)
-        : this.recordSuccess(result);
-    } catch {
-      return this.recordUnavailable(rootPath);
-    }
+    const result = await this.scanCandidate(rootPath);
+    return hasUnavailableRoot(result)
+      ? this.recordUnavailable(rootPath, result)
+      : this.recordSuccess(result);
   }
 
   private recordSuccess(result: CatalogResult): CatalogResult {
