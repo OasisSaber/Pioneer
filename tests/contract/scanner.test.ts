@@ -145,14 +145,7 @@ describe('one-level read-only workspace scanner', () => {
     });
     expect(result.projects[1]).toMatchObject({
       description: 'Package description',
-      technologies: [
-        'electron',
-        'react',
-        'sharp',
-        'typescript',
-        'vite',
-        'zod',
-      ],
+      technologies: ['electron', 'react', 'sharp', 'typescript', 'vite', 'zod'],
     });
   });
 
