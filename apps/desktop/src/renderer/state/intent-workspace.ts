@@ -73,9 +73,9 @@ export function intentWorkspaceReducer(
       if (instruction.length === 0) return failure(state, 'EMPTY_INSTRUCTION');
 
       let draft: TaskIntent;
-      if (
-        state.intent === null ||
-        state.intent.projectId !== action.projectId ||
+      if (state.intent?.projectId !== action.projectId) {
+        draft = newDraftIntent(action.projectId, instruction);
+      } else if (
         state.intent.status === 'cancelled' ||
         state.intent.status === 'ready'
       ) {

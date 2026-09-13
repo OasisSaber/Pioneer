@@ -129,7 +129,9 @@ export function ProjectWorkspace({
           <span className="status-pill">M3 · INTENT PREVIEW</span>
           <button
             className="button"
-            onClick={() => dispatch({ type: 'RESET' })}
+            onClick={() => {
+              dispatch({ type: 'RESET' });
+            }}
             type="button"
           >
             ＋ 新任务
@@ -160,12 +162,12 @@ export function ProjectWorkspace({
               <span>任务说明</span>
               <textarea
                 aria-label="任务说明"
-                onChange={(event) =>
+                onChange={(event) => {
                   dispatch({
                     type: 'SET_INSTRUCTION',
                     instruction: event.target.value,
-                  })
-                }
+                  });
+                }}
                 placeholder="例如：检查当前工作区导航，先给出最小安全计划；批准前不要修改文件。"
                 rows={8}
                 value={state.draftInstruction}
@@ -281,21 +283,27 @@ export function ProjectWorkspace({
             <div className="intent-card__actions">
               <button
                 className="button"
-                onClick={() => dispatch({ type: 'EDIT' })}
+                onClick={() => {
+                  dispatch({ type: 'EDIT' });
+                }}
                 type="button"
               >
                 返回修改
               </button>
               <button
                 className="button"
-                onClick={() => dispatch({ type: 'CANCEL' })}
+                onClick={() => {
+                  dispatch({ type: 'CANCEL' });
+                }}
                 type="button"
               >
                 取消任务
               </button>
               <button
                 className="button button--approve"
-                onClick={() => dispatch({ type: 'CONFIRM' })}
+                onClick={() => {
+                  dispatch({ type: 'CONFIRM' });
+                }}
                 type="button"
               >
                 批准计划
@@ -322,7 +330,9 @@ export function ProjectWorkspace({
           </div>
           <button
             className="button button--primary"
-            onClick={() => dispatch({ type: 'RESET' })}
+            onClick={() => {
+              dispatch({ type: 'RESET' });
+            }}
             type="button"
           >
             新建任务
@@ -340,7 +350,9 @@ export function ProjectWorkspace({
           <p>没有启动执行，也没有修改项目文件。</p>
           <button
             className="button"
-            onClick={() => dispatch({ type: 'RESET' })}
+            onClick={() => {
+              dispatch({ type: 'RESET' });
+            }}
             type="button"
           >
             返回新任务
