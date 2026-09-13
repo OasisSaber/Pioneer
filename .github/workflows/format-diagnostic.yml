@@ -22,19 +22,26 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Format changed TypeScript files
+      - name: Format quality-gate targets
         run: >-
           pnpm exec prettier --write
-          apps/desktop/src/main/catalog/catalog-service.ts
-          apps/desktop/src/main/catalog/metadata.ts
-          tests/contract/catalog-service.test.ts
-          tests/contract/metadata.test.ts
-      - name: Upload formatted files
+          apps/desktop
+          tests/contract
+          tests/e2e
+          tests/helpers
+          package.json
+          pnpm-workspace.yaml
+          eslint.config.mjs
+          vitest.config.ts
+      - name: Capture formatter diff
+        shell: bash
+        run: |
+          git diff --name-only > prettier-files.txt
+          git diff --no-ext-diff > prettier.diff
+      - name: Upload formatter diff
         uses: actions/upload-artifact@v4
         with:
-          name: prettier-output
+          name: prettier-diff
           path: |
-            apps/desktop/src/main/catalog/catalog-service.ts
-            apps/desktop/src/main/catalog/metadata.ts
-            tests/contract/catalog-service.test.ts
-            tests/contract/metadata.test.ts
+            prettier-files.txt
+            prettier.diff
