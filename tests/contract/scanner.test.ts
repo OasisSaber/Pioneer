@@ -120,6 +120,9 @@ describe('one-level read-only workspace scanner', () => {
           [`${alpha}\\package.json`]: JSON.stringify({
             description: 'Package description',
             dependencies: { electron: '1', zod: '1' },
+            devDependencies: { electron: '1', typescript: '1', vite: '1' },
+            peerDependencies: { react: '1' },
+            optionalDependencies: { sharp: '1' },
           }),
           [`${alpha}\\README.md`]: '# Alpha\n\nREADME description',
           [`${beta}\\README.md`]:
@@ -142,7 +145,14 @@ describe('one-level read-only workspace scanner', () => {
     });
     expect(result.projects[1]).toMatchObject({
       description: 'Package description',
-      technologies: ['electron', 'zod'],
+      technologies: [
+        'electron',
+        'react',
+        'sharp',
+        'typescript',
+        'vite',
+        'zod',
+      ],
     });
   });
 
