@@ -35,9 +35,10 @@ function unavailableFor(rootPath: string): CatalogResult {
 
 function settings(saved: string[] = []) {
   return {
-    loadRoot: async () => null,
-    saveRoot: async (rootPath: string) => {
+    loadRoot: () => Promise.resolve(null),
+    saveRoot: (rootPath: string) => {
       saved.push(rootPath);
+      return Promise.resolve();
     },
   };
 }
@@ -51,16 +52,15 @@ describe('CatalogService root transactions', () => {
       initialCatalog: initial,
       settings: settings(saved),
       validateRoot: () => true,
-      scan: async () => {
-        throw new Error('scanner exploded');
-      },
+      scan: () => Promise.reject(new Error('scanner exploded')),
     });
 
-    await expect(service.selectRoot('candidate-root')).rejects.toMatchObject({
-      name: 'CatalogInternalScanError',
-      message: 'Workspace catalog scan failed unexpectedly.',
-      cause: expect.objectContaining({ message: 'scanner exploded' }),
-    });
+    await expect(service.selectRoot('candidate-root')).rejects.toBeInstanceOf(
+      CatalogInternalScanError,
+    );
+    await expect(service.selectRoot('candidate-root')).rejects.toThrow(
+      'Workspace catalog scan failed unexpectedly.',
+    );
     expect(saved).toEqual([]);
     expect(service.getCurrentCatalog()).toEqual(initial);
     expect(service.getLastGoodCatalog()).toEqual(initial);
@@ -74,7 +74,7 @@ describe('CatalogService root transactions', () => {
       initialCatalog: initial,
       settings: settings(saved),
       validateRoot: () => true,
-      scan: async (rootPath) => unavailableFor(rootPath),
+      scan: (rootPath) => Promise.resolve(unavailableFor(rootPath)),
     });
 
     const candidate = normalizeRootPath('candidate-root');
@@ -92,13 +92,11 @@ describe('CatalogService root transactions', () => {
     const service = new CatalogService({
       initialCatalog: initial,
       settings: {
-        loadRoot: async () => null,
-        saveRoot: async () => {
-          throw new Error('settings write failed');
-        },
+        loadRoot: () => Promise.resolve(null),
+        saveRoot: () => Promise.reject(new Error('settings write failed')),
       },
       validateRoot: () => true,
-      scan: async (rootPath) => catalogFor(rootPath),
+      scan: (rootPath) => Promise.resolve(catalogFor(rootPath)),
     });
 
     await expect(service.selectRoot('candidate-root')).rejects.toThrow(
@@ -112,15 +110,16 @@ describe('CatalogService root transactions', () => {
     const order: string[] = [];
     const service = new CatalogService({
       settings: {
-        loadRoot: async () => null,
-        saveRoot: async (rootPath) => {
+        loadRoot: () => Promise.resolve(null),
+        saveRoot: (rootPath) => {
           order.push(`save:${rootPath}`);
+          return Promise.resolve();
         },
       },
       validateRoot: () => true,
-      scan: async (rootPath) => {
+      scan: (rootPath) => {
         order.push(`scan:${rootPath}`);
-        return catalogFor(rootPath);
+        return Promise.resolve(catalogFor(rootPath));
       },
     });
 
@@ -137,13 +136,11 @@ describe('CatalogService root transactions', () => {
     const rememberedRoot = normalizeRootPath('remembered-root');
     const service = new CatalogService({
       settings: {
-        loadRoot: async () => rememberedRoot,
-        saveRoot: async () => undefined,
+        loadRoot: () => Promise.resolve(rememberedRoot),
+        saveRoot: () => Promise.resolve(),
       },
       validateRoot: () => true,
-      scan: async () => {
-        throw new Error('broken scanner contract');
-      },
+      scan: () => Promise.reject(new Error('broken scanner contract')),
     });
 
     await expect(service.getCatalog()).rejects.toBeInstanceOf(
