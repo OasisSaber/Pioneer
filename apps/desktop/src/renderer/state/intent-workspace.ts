@@ -5,11 +5,7 @@ import type {
 } from '../../shared/contracts/task-intent';
 import { transitionIntent } from '../../shared/task-intent';
 
-export type IntentWorkspacePhase =
-  | 'compose'
-  | 'review'
-  | 'ready'
-  | 'cancelled';
+export type IntentWorkspacePhase = 'compose' | 'review' | 'ready' | 'cancelled';
 
 export type IntentWorkspaceError = 'EMPTY_INSTRUCTION' | IntentErrorCode;
 

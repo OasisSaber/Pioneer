@@ -214,8 +214,9 @@ export function ProjectWorkspace({
               <p className="eyebrow">LOCAL PREFLIGHT</p>
               <h3>已形成本地预览计划</h3>
               <p>
-                当前计划由 Pioneer 本地确定性规则生成，用于验证 Human-in-the-loop
-                流程。没有模型调用、工具执行、Token 消耗或文件写入。
+                当前计划由 Pioneer 本地确定性规则生成，用于验证
+                Human-in-the-loop 流程。没有模型调用、工具执行、Token
+                消耗或文件写入。
               </p>
               <dl>
                 <div>
@@ -315,7 +316,9 @@ export function ProjectWorkspace({
           </p>
           <div className="intent-terminal-state__summary">
             <strong>{state.intent.instruction}</strong>
-            <span>{state.intent.steps.length} 个计划步骤已锁定供后续 Runtime 使用。</span>
+            <span>
+              {state.intent.steps.length} 个计划步骤已锁定供后续 Runtime 使用。
+            </span>
           </div>
           <button
             className="button button--primary"
@@ -328,7 +331,10 @@ export function ProjectWorkspace({
       ) : null}
 
       {state.phase === 'cancelled' ? (
-        <section className="intent-terminal-state" aria-label="Intent cancelled">
+        <section
+          className="intent-terminal-state"
+          aria-label="Intent cancelled"
+        >
           <p className="eyebrow">INPUT · CANCELLED</p>
           <h2>任务已取消</h2>
           <p>没有启动执行，也没有修改项目文件。</p>

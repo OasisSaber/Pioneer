@@ -50,12 +50,12 @@ test('moves a project task from Input through Intent Review to READY without mut
     await expect(page.getByRole('button', { name: '自定' })).toBeDisabled();
 
     const instruction = page.getByRole('textbox', { name: '任务说明' });
-    await instruction.fill('统一项目导航；先生成最小安全计划，批准前不要执行。');
+    await instruction.fill(
+      '统一项目导航；先生成最小安全计划，批准前不要执行。',
+    );
     await page.getByRole('button', { name: '生成意图计划' }).click();
 
-    await expect(
-      page.getByRole('heading', { name: '意图审阅' }),
-    ).toBeVisible();
+    await expect(page.getByRole('heading', { name: '意图审阅' })).toBeVisible();
     await expect(page.getByText('REV 1', { exact: true })).toBeVisible();
     await expect(page.getByText('执行尚未开始。')).toBeVisible();
 
