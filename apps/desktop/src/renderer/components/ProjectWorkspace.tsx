@@ -327,7 +327,8 @@ export function ProjectWorkspace({
           <div className="intent-terminal-state__summary">
             <strong>{state.intent.instruction}</strong>
             <span>
-              {state.intent.steps.length} 个计划步骤将原样锁定到 Runtime Session。
+              {state.intent.steps.length} 个计划步骤将原样锁定到 Runtime
+              Session。
             </span>
           </div>
           {error === null ? null : (
@@ -384,16 +385,17 @@ export function ProjectWorkspace({
               <strong>INITIALIZED</strong>
             </div>
           </div>
-          <div className="runtime-capabilities" aria-label="Runtime capabilities">
+          <div
+            className="runtime-capabilities"
+            aria-label="Runtime capabilities"
+          >
             <strong>模型接入：关闭</strong>
             <strong>工具执行：关闭</strong>
             <strong>文件写入：关闭</strong>
           </div>
           <div className="intent-terminal-state__summary">
             <strong>{state.session.approvedIntent.instruction}</strong>
-            <span>
-              会话只持有已批准意图的独立快照，不会重新解释原始输入。
-            </span>
+            <span>会话只持有已批准意图的独立快照，不会重新解释原始输入。</span>
           </div>
           <button
             className="button"

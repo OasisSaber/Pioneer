@@ -82,9 +82,15 @@ test('moves an approved READY intent into an initialized runtime session without
     await expect(
       page.getByRole('heading', { name: '运行会话已初始化' }),
     ).toBeVisible();
-    await expect(page.getByText('模型接入：关闭', { exact: true })).toBeVisible();
-    await expect(page.getByText('工具执行：关闭', { exact: true })).toBeVisible();
-    await expect(page.getByText('文件写入：关闭', { exact: true })).toBeVisible();
+    await expect(
+      page.getByText('模型接入：关闭', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('工具执行：关闭', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByText('文件写入：关闭', { exact: true }),
+    ).toBeVisible();
     await expect(page.getByText(/执行仍未开始/)).toBeVisible();
   } finally {
     try {

@@ -11,16 +11,10 @@ import { bootstrapRuntimeSession } from '../../shared/runtime-session';
 import { transitionIntent } from '../../shared/task-intent';
 
 export type IntentWorkspacePhase =
-  | 'compose'
-  | 'review'
-  | 'ready'
-  | 'session'
-  | 'cancelled';
+  'compose' | 'review' | 'ready' | 'session' | 'cancelled';
 
 export type IntentWorkspaceError =
-  | 'EMPTY_INSTRUCTION'
-  | IntentErrorCode
-  | RuntimeSessionErrorCode;
+  'EMPTY_INSTRUCTION' | IntentErrorCode | RuntimeSessionErrorCode;
 
 export interface IntentWorkspaceState {
   phase: IntentWorkspacePhase;
