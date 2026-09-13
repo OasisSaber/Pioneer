@@ -1,6 +1,16 @@
-# Keep source and documentation line endings deterministic across Windows and CI.
+# Keep repository text deterministic across Windows development and CI.
 * text=auto eol=lf
 
-# Windows command scripts may retain CRLF if added later.
+# Windows command scripts conventionally use CRLF.
 *.bat text eol=crlf
 *.cmd text eol=crlf
+
+# Binary assets must never receive line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.pptx binary

@@ -1,18 +1,33 @@
-# M2 push and checkout rename runbook
+# M2 push and checkout runbook
 
-## Status
+## Status and authority
 
-**Retired. No checkout rename is required.**
+**Status: checkout rename retired.** The clean-room rebuild already established the canonical local checkout as `D:\Projects\Pioneer`, so there is no remaining source → destination rename operation for M2.
 
-The clean-room repository rebuild established the canonical checkout as:
+This document now records only the post-review remote push and local verification boundary. It is non-executing guidance: a reviewed implementation is not, by itself, authorization to merge or publish `main`.
 
-`D:\\Projects\\Pioneer`
+## Remote push preconditions
 
-The previous version of this runbook contained identical source and destination paths. That was a stale migration artifact and must not be executed.
+1. Obtain explicit human authorization for the remote push or merge.
+2. Fetch and verify the fresh remote state immediately before delivery. Confirm the intended remote, target branch/bookmark, and absence of an unexpected remote advance.
+3. Push only the reviewed and locally sealed change. Stop if remote verification differs from the reviewed baseline.
+4. Confirm that the expected remote revision is visible before marking the delivery complete.
 
-## Remaining post-M2 verification
+## Canonical checkout
 
-After an explicitly authorized push, verify the canonical checkout in place:
+The canonical checkout is already:
+
+```text
+D:\Projects\Pioneer
+```
+
+Do **not** perform a rename when source and destination resolve to this same path. Historical instructions that attempted `D:\Projects\Pioneer` → `D:\Projects\Pioneer` were invalid and are intentionally retired.
+
+If the checkout is ever relocated in the future, create a new, separately reviewed operational runbook containing two distinct, explicitly verified sibling paths. Do not infer a rename from this document.
+
+## Post-delivery verification
+
+From the canonical checkout, run:
 
 ```powershell
 jj status
@@ -20,13 +35,8 @@ git remote -v
 pnpm check
 ```
 
-Requirements:
-
-1. `jj status` must show the expected reviewed working-copy state.
-2. `git remote -v` must point to the intended `OasisSaber/Pioneer` repository.
-3. `pnpm check` must pass from `D:\\Projects\\Pioneer`.
-4. Do not rename, move, merge, overwrite, or delete the checkout as part of M2 closure.
+Require all three to finish successfully. A successful remote update alone is not proof that the checkout, dependencies, Electron launch, or full quality gate still works.
 
 ## Stop conditions
 
-Stop without improvising if the remote moved unexpectedly, the checkout path differs from the canonical path, or any verification command fails. Do not perform a destructive cleanup, force push, remote rewrite, or alternate-path migration as a workaround.
+Stop without improvising if authorization is missing, the remote moved, the canonical checkout differs from `D:\Projects\Pioneer`, or any post-delivery command fails. Do not perform destructive cleanup, force-push, remote history rewriting, or an alternate-path rename as a workaround.

@@ -26,30 +26,79 @@ No manual/native-picker pass is claimed for this record.
 - User explicitly requested "跳过验收继续开发". This authorizes deferring remaining manual checks to continue development; it does not convert them to passes or establish complete M2 acceptance.
 - Earlier Computer Use attempts were blocked by native-dialog targeting and provide no additional passes. No current build identity or console-clean claim is inferred from the screenshot.
 
+## M2 final-gate handoff — 2026-09-13
 
-## Remote M2 gate evidence — 2026-09-13
+The remote M2 repair branch is `fix/m2-final-gate`. Automated Electron E2E continues to exercise the deterministic picker seam, but the following three cases still require a human to interact with the real Windows native directory picker. Do not mark them PASS from CI evidence alone.
 
-A Windows GitHub Actions run on the hardened M2 branch completed the authoritative automated gate successfully:
+### Required disposable roots
 
-- Workflow: `M2 Quality Gate`
-- Run ID: `34728719901`
-- Platform: GitHub-hosted Windows Server 2025
-- `pnpm verify:repository`: **PASS**
-- `pnpm check`: **PASS**
-- Real Electron E2E therefore passed for the committed deterministic picker seam, including immediate-child discovery, root switching, unavailable-root recovery, fixture immutability, and tab behavior.
+Prepare two disposable folders outside the Pioneer checkout, for example:
 
-This automated evidence does **not** operate the native Windows directory dialog. The native-picker evidence boundary remains intentionally separate.
+```text
+D:\Temp\PioneerPickerA\alpha-project\
+D:\Temp\PioneerPickerA\nested-container\not-an-immediate-project\
+D:\Temp\PioneerPickerB\beta-project\
+```
 
-### Remaining native-dialog closure
+Add a small `README.md` or `package.json` inside `alpha-project` and `beta-project`. Do not use a production workspace to manufacture failure cases.
 
-The following three cases still require one human-operated Windows smoke pass against the reviewed build:
+### G1 · Immediate-child-only discovery
 
-| Case | Automated behavior evidence | Native dialog evidence |
-| --- | --- | --- |
-| Selecting a valid root loads only its immediate child directories | PASS via Real Electron E2E | Pending |
-| Switching roots replaces the current catalog | PASS via Real Electron E2E | Pending |
-| Selecting an unavailable disposable root shows a recoverable message | PASS via Real Electron E2E | Pending |
+1. Launch the reviewed build from `fix/m2-final-gate`.
+2. Use the real **Change workspace** button.
+3. In the native picker, select `D:\Temp\PioneerPickerA`.
+4. Confirm that `alpha-project` and `nested-container` are discovered as immediate child directories.
+5. Confirm that `not-an-immediate-project` is **not** promoted to a separate top-level project card.
+6. Record the observed root path and visible project-card names.
 
-Cancellation already has the 2026-09-09 **PASS (user-reported)** evidence above.
+Status: **PASS — human-observed**.
 
-Until these three native-dialog interactions are observed, M2 should remain `IN PROGRESS`; the automated gate alone must not be described as complete native-picker acceptance.
+Observed on Windows:
+- Selected root: `D:\Temp\PioneerPickerA`
+- Visible cards: `alpha-project`, `nested-container`
+- Nested project not promoted: yes
+
+### G2 · Switching roots replaces the catalog
+
+1. Starting from `PioneerPickerA`, choose **Change workspace** again.
+2. Select `D:\Temp\PioneerPickerB` in the real native picker.
+3. Confirm that the displayed root changes to `PioneerPickerB`.
+4. Confirm that `beta-project` appears.
+5. Confirm that the `PioneerPickerA` cards disappear instead of being merged into the new catalog.
+
+Status: **PASS — human-observed**.
+
+Observed on Windows:
+- Previous root: `D:\Temp\PioneerPickerA`
+- New root: `D:\Temp\PioneerPickerB`
+- Visible cards after switch: `beta-project`
+- Previous cards retained: no
+
+### G3 · Unavailable-root recovery
+
+Use a disposable root only:
+
+1. Select a disposable workspace through the native picker and confirm it loads.
+2. Close Pioneer.
+3. Rename or remove that disposable root outside Pioneer.
+4. Reopen Pioneer.
+5. Confirm that the app reports the workspace root as unavailable without crashing or mutating another workspace.
+6. Use **Change workspace** to select a valid disposable root and confirm normal recovery.
+
+Status: **PASS — human-observed**.
+
+Observed on Windows:
+- Remembered root renamed while app closed (`D:\Temp\PioneerPickerB.offline`)
+- Application reopened without crash
+- Unavailable-root state shown
+- Change workspace remained functional
+- Recovery root: `D:\Temp\PioneerPickerA`
+
+### Acceptance boundary
+
+M2 may be marked complete only when:
+
+- G1, G2, and G3 have human-observed PASS evidence;
+- the Windows CI quality gate passes on the reviewed revision;
+- the final diff has been independently reviewed;
+- no merge or publication claim is made without the human authorization required by `AGENTS.md`.
