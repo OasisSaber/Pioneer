@@ -1,23 +1,18 @@
-name: M2 Quality Gate
+name: M2 Historical Regression Gate
 
 on:
-  pull_request:
-    branches:
-      - main
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: m2-quality-${{ github.workflow }}-${{ github.ref }}
+  group: m2-historical-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  m2-quality:
-    name: Windows M2 gate
+  m2-regression:
+    name: Windows historical M2 regression
     runs-on: windows-latest
     timeout-minutes: 40
 
@@ -43,5 +38,5 @@ jobs:
       - name: Verify repository normalization
         run: pnpm verify:repository
 
-      - name: Run authoritative M2 gate
+      - name: Run historical regression gate
         run: pnpm check
