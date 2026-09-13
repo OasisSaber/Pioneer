@@ -227,7 +227,9 @@ describe('CatalogService', () => {
       scan: () => Promise.reject(new Error('scanner invariant failed')),
     });
 
-    await expect(service.getCatalog()).rejects.toThrow('scanner invariant failed');
+    await expect(service.getCatalog()).rejects.toThrow(
+      'scanner invariant failed',
+    );
   });
   it('shares one in-flight rescan promise', async () => {
     const next = deferred<CatalogResult>();
