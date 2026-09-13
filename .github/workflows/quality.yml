@@ -1,0 +1,69 @@
+name: Pioneer Quality Gate
+
+on:
+  push:
+    branches:
+      - main
+      - 'fix/**'
+      - 'feat/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pioneer-quality-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  windows-quality:
+    name: Windows / pnpm check
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enable pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify repository normalization
+        run: pnpm verify:repository
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Contract tests
+        run: pnpm test:contract
+
+      - name: Prototype tests
+        run: pnpm test:prototype
+
+      - name: Electron E2E
+        run: pnpm test:e2e
+
+      - name: Package smoke
+        run: pnpm package:smoke
+
+      - name: Confirm aggregate quality command
+        run: pnpm check

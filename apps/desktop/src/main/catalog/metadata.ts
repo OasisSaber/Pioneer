@@ -7,6 +7,12 @@ import type { CatalogFs } from './fs-adapter';
 import { isPathInsideRoot, normalizeRootPath } from './path-policy';
 
 const READ_PREFIX_BYTES = 65_536;
+const PACKAGE_DEPENDENCY_FIELDS = [
+  'dependencies',
+  'devDependencies',
+  'peerDependencies',
+  'optionalDependencies',
+] as const;
 
 export class MetadataInvalidError extends Error {
   public constructor(projectPath: string) {
@@ -119,6 +125,23 @@ function firstReadmeParagraph(readme: string): string | null {
   return paragraphs.find((paragraph) => !paragraph.startsWith('#')) ?? null;
 }
 
+function packageTechnologies(record: Record<string, unknown>): string[] {
+  const technologies = new Set<string>();
+  for (const field of PACKAGE_DEPENDENCY_FIELDS) {
+    const dependencies = record[field];
+    if (
+      typeof dependencies !== 'object' ||
+      dependencies === null ||
+      Array.isArray(dependencies)
+    )
+      continue;
+    for (const dependency of Object.keys(dependencies)) {
+      technologies.add(dependency);
+    }
+  }
+  return [...technologies].sort((left, right) => left.localeCompare(right));
+}
+
 function parsePackageMetadata(
   packageText: string,
   projectPath: string,
@@ -128,29 +151,12 @@ function parsePackageMetadata(
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed))
       throw new Error('not an object');
     const record = parsed as Record<string, unknown>;
-    const dependencySections = [
-      record.dependencies,
-      record.devDependencies,
-      record.peerDependencies,
-      record.optionalDependencies,
-    ];
-    const technologies = [
-      ...new Set(
-        dependencySections.flatMap((dependencies) =>
-          typeof dependencies === 'object' &&
-          dependencies !== null &&
-          !Array.isArray(dependencies)
-            ? Object.keys(dependencies)
-            : [],
-        ),
-      ),
-    ].sort((left, right) => left.localeCompare(right));
     return {
       description:
         typeof record.description === 'string' && record.description.trim()
           ? record.description.trim()
           : null,
-      technologies,
+      technologies: packageTechnologies(record),
     };
   } catch {
     throw new MetadataInvalidError(projectPath);

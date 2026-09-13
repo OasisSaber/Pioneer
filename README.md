@@ -4,7 +4,7 @@ Pioneer is a modular AI Agent interaction-system project moving from an M1 HTML 
 
 - Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the M2 read-only Electron foundation.
 - Historical visual references: frozen M1 HTML design references under [`demos/`](demos/README.md).
-- Current engineering milestone: M1.5 complete; M2 desktop foundation in progress pending the full gate and independent review.
+- Current engineering milestone: M1.5 complete; M2 desktop foundation complete. Next: M3 design-contract synchronization and the Input → Intent Review → READY vertical slice.
 - Canonical repository: `OasisSaber/Pioneer`.
 - Canonical local checkout: `D:\Projects\Pioneer`.
 
@@ -40,7 +40,7 @@ pnpm check
 - **Prototype Tests** are the executable frozen M1 simulator plus static/adversarial probes: `pnpm test:prototype`.
 - **Real E2E** uses Playwright to launch Electron and cross main → preload → renderer against committed filesystem fixtures while checking fixture immutability: `pnpm test:e2e`.
 
-Renderer mocks cannot establish a Real E2E claim. The Electron desktop foundation remains in progress for M2 until the authoritative gate and independent review pass. See [`TEST_INFRA.md`](TEST_INFRA.md) for the authoritative taxonomy and [`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) for milestone status.
+Renderer mocks cannot establish a Real E2E claim. M2 is complete: Contract Tests, Real Electron E2E, Windows native-picker human acceptance, package smoke, and the final Windows quality gate have passed. M2 remains strictly read-only and does not include file writes, workspace reorganization, or snapshots. See [`TEST_INFRA.md`](TEST_INFRA.md) for the authoritative taxonomy and [`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) for milestone status.
 
 ---
 

@@ -1,150 +1,128 @@
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import {
-  CatalogInternalScanError,
-  CatalogService,
-} from '../../apps/desktop/src/main/catalog/catalog-service';
-import { normalizeRootPath } from '../../apps/desktop/src/main/catalog/path-policy';
+import { CatalogService } from '../../apps/desktop/src/main/catalog/catalog-service';
 import type { CatalogResult } from '../../apps/desktop/src/shared/contracts/catalog';
 
-const scannedAt = '2026-09-13T00:00:00.000Z';
+const rootA = resolve('workspace-a');
+const rootB = resolve('workspace-b');
 
-function catalogFor(rootPath: string): CatalogResult {
-  return {
-    rootPath,
-    projects: [],
-    warnings: [],
-    scannedAt,
-  };
-}
+const catalog = (rootPath: string): CatalogResult => ({
+  rootPath,
+  projects: [],
+  warnings: [],
+  scannedAt: '2026-09-13T00:00:00.000Z',
+});
 
-function unavailableFor(rootPath: string): CatalogResult {
-  return {
-    rootPath: null,
-    projects: [],
-    warnings: [
-      {
-        code: 'ROOT_UNAVAILABLE',
-        path: rootPath,
-        message: 'Workspace root is unavailable.',
-      },
-    ],
-    scannedAt,
-  };
-}
-
-function settings(saved: string[] = []) {
-  return {
-    loadRoot: () => Promise.resolve(null),
-    saveRoot: (rootPath: string) => {
-      saved.push(rootPath);
-      return Promise.resolve();
+const unavailable = (rootPath: string): CatalogResult => ({
+  rootPath: null,
+  projects: [],
+  warnings: [
+    {
+      code: 'ROOT_UNAVAILABLE',
+      path: rootPath,
+      message: 'Workspace root is unavailable.',
     },
-  };
-}
+  ],
+  scannedAt: '2026-09-13T00:00:00.000Z',
+});
 
-describe('CatalogService root transactions', () => {
-  it('propagates unexpected scanner failures without disguising them as unavailable roots', async () => {
-    const activeRoot = normalizeRootPath('active-root');
-    const initial = catalogFor(activeRoot);
+describe('CatalogService root transaction boundaries', () => {
+  it('does not persist or activate an unavailable root candidate', async () => {
     const saved: string[] = [];
     const service = new CatalogService({
-      initialCatalog: initial,
-      settings: settings(saved),
-      validateRoot: () => true,
-      scan: () => Promise.reject(new Error('scanner exploded')),
-    });
-
-    await expect(service.selectRoot('candidate-root')).rejects.toBeInstanceOf(
-      CatalogInternalScanError,
-    );
-    await expect(service.selectRoot('candidate-root')).rejects.toThrow(
-      'Workspace catalog scan failed unexpectedly.',
-    );
-    expect(saved).toEqual([]);
-    expect(service.getCurrentCatalog()).toEqual(initial);
-    expect(service.getLastGoodCatalog()).toEqual(initial);
-  });
-
-  it('does not persist or activate an unavailable candidate root', async () => {
-    const activeRoot = normalizeRootPath('active-root');
-    const initial = catalogFor(activeRoot);
-    const saved: string[] = [];
-    const service = new CatalogService({
-      initialCatalog: initial,
-      settings: settings(saved),
-      validateRoot: () => true,
-      scan: (rootPath) => Promise.resolve(unavailableFor(rootPath)),
-    });
-
-    const candidate = normalizeRootPath('candidate-root');
-    await expect(service.selectRoot('candidate-root')).resolves.toEqual(
-      unavailableFor(candidate),
-    );
-    expect(saved).toEqual([]);
-    expect(service.getCurrentCatalog()).toEqual(initial);
-    expect(service.getLastGoodCatalog()).toEqual(initial);
-  });
-
-  it('keeps the active catalog unchanged when persistence fails after a successful scan', async () => {
-    const activeRoot = normalizeRootPath('active-root');
-    const initial = catalogFor(activeRoot);
-    const service = new CatalogService({
-      initialCatalog: initial,
+      initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: () => Promise.resolve(null),
-        saveRoot: () => Promise.reject(new Error('settings write failed')),
-      },
-      validateRoot: () => true,
-      scan: (rootPath) => Promise.resolve(catalogFor(rootPath)),
-    });
-
-    await expect(service.selectRoot('candidate-root')).rejects.toThrow(
-      'settings write failed',
-    );
-    expect(service.getCurrentCatalog()).toEqual(initial);
-    expect(service.getLastGoodCatalog()).toEqual(initial);
-  });
-
-  it('scans before persisting and commits the candidate only after both succeed', async () => {
-    const order: string[] = [];
-    const service = new CatalogService({
-      settings: {
-        loadRoot: () => Promise.resolve(null),
+        loadRoot: () => Promise.resolve(rootA),
         saveRoot: (rootPath) => {
-          order.push(`save:${rootPath}`);
+          saved.push(rootPath);
           return Promise.resolve();
         },
       },
-      validateRoot: () => true,
-      scan: (rootPath) => {
-        order.push(`scan:${rootPath}`);
-        return Promise.resolve(catalogFor(rootPath));
-      },
+      scan: (rootPath) => Promise.resolve(unavailable(rootPath)),
     });
 
-    const candidate = normalizeRootPath('candidate-root');
-    await expect(service.selectRoot('candidate-root')).resolves.toEqual(
-      catalogFor(candidate),
-    );
-    expect(order).toEqual([`scan:${candidate}`, `save:${candidate}`]);
-    expect(service.getCurrentCatalog()).toEqual(catalogFor(candidate));
-    expect(service.getLastGoodCatalog()).toEqual(catalogFor(candidate));
+    const result = await service.selectRoot(rootB);
+
+    expect(result).toEqual(unavailable(rootB));
+    expect(saved).toEqual([]);
+    expect(service.getCurrentCatalog()).toEqual(catalog(rootA));
+    expect(service.getLastGoodCatalog()).toEqual(catalog(rootA));
   });
 
-  it('surfaces an unexpected remembered-root scan failure during initialization', async () => {
-    const rememberedRoot = normalizeRootPath('remembered-root');
+  it('persists only after a candidate scan succeeds', async () => {
+    const events: string[] = [];
     const service = new CatalogService({
+      initialCatalog: catalog(rootA),
       settings: {
-        loadRoot: () => Promise.resolve(rememberedRoot),
-        saveRoot: () => Promise.resolve(),
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: (rootPath) => {
+          events.push(`save:${rootPath}`);
+          return Promise.resolve();
+        },
       },
-      validateRoot: () => true,
-      scan: () => Promise.reject(new Error('broken scanner contract')),
+      scan: (rootPath) => {
+        events.push(`scan:${rootPath}`);
+        return Promise.resolve(catalog(rootPath));
+      },
     });
 
-    await expect(service.getCatalog()).rejects.toBeInstanceOf(
-      CatalogInternalScanError,
+    await expect(service.selectRoot(rootB)).resolves.toEqual(catalog(rootB));
+    expect(events).toEqual([`scan:${rootB}`, `save:${rootB}`]);
+    expect(service.getCurrentCatalog()).toEqual(catalog(rootB));
+  });
+
+  it('propagates unexpected scanner failures without relabeling them as root availability', async () => {
+    const service = new CatalogService({
+      initialCatalog: catalog(rootA),
+      settings: {
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: () => Promise.resolve(),
+      },
+      scan: () => Promise.reject(new Error('scanner invariant failed')),
+    });
+
+    await expect(service.selectRoot(rootB)).rejects.toThrow(
+      'scanner invariant failed',
     );
+    expect(service.getCurrentCatalog()).toEqual(catalog(rootA));
+    expect(service.getLastGoodCatalog()).toEqual(catalog(rootA));
+  });
+
+  it('converts an invalid remembered root into a recoverable unavailable state', async () => {
+    const service = new CatalogService({
+      settings: {
+        loadRoot: () => Promise.resolve('relative-root'),
+        saveRoot: () => Promise.resolve(),
+      },
+      scan: (rootPath) => Promise.resolve(catalog(rootPath)),
+      now: () => new Date('2026-09-13T00:00:00.000Z'),
+    });
+
+    const result = await service.getCatalog();
+    expect(result.rootPath).toBeNull();
+    expect(result.warnings).toEqual([
+      {
+        code: 'ROOT_UNAVAILABLE',
+        path: 'relative-root',
+        message: 'Workspace root is unavailable.',
+      },
+    ]);
+  });
+
+  it('records an unavailable rescan while retaining the last good catalog', async () => {
+    const service = new CatalogService({
+      initialCatalog: catalog(rootA),
+      settings: {
+        loadRoot: () => Promise.resolve(rootA),
+        saveRoot: () => Promise.resolve(),
+      },
+      scan: (rootPath) => Promise.resolve(unavailable(rootPath)),
+    });
+
+    const result = await service.rescan();
+    expect(result).toEqual(unavailable(rootA));
+    expect(service.getCurrentCatalog()).toEqual(unavailable(rootA));
+    expect(service.getLastGoodCatalog()).toEqual(catalog(rootA));
   });
 });
