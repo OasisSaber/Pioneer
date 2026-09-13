@@ -1,0 +1,28 @@
+name: M3 Runtime Format Diagnostic
+
+on:
+  push:
+    branches:
+      - 'feat/m3-runtime-session-bootstrap'
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format runtime slice
+        run: pnpm exec prettier --write apps/desktop/src/renderer/components/ProjectWorkspace.tsx apps/desktop/src/renderer/state/intent-workspace.ts tests/e2e/m3-intent.e2e.spec.ts
+      - name: Print formatting diff
+        run: git diff --no-color -- apps/desktop/src/renderer/components/ProjectWorkspace.tsx apps/desktop/src/renderer/state/intent-workspace.ts tests/e2e/m3-intent.e2e.spec.ts
