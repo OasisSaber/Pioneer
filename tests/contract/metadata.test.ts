@@ -26,21 +26,23 @@ describe('project metadata package technology detection', () => {
     });
 
     const fs: CatalogFs = {
-      readdir: async () => [],
-      realpath: async (path) => {
-        if (path === readmePath || path === gitPath) throw missing();
-        return path;
+      readdir: () => Promise.resolve([]),
+      realpath: (path) => {
+        if (path === readmePath || path === gitPath)
+          return Promise.reject(missing());
+        return Promise.resolve(path);
       },
-      readTextPrefix: async (path) => {
-        if (path === packagePath) return packageText;
-        throw missing();
+      readTextPrefix: (path) => {
+        if (path === packagePath) return Promise.resolve(packageText);
+        return Promise.reject(missing());
       },
-      stat: async (path) => ({
-        mtime: new Date('2026-09-13T00:00:00.000Z'),
-        isDirectory: () => path === project,
-        isFile: () => path === packagePath,
-      }),
-      access: async () => undefined,
+      stat: (path) =>
+        Promise.resolve({
+          mtime: new Date('2026-09-13T00:00:00.000Z'),
+          isDirectory: () => path === project,
+          isFile: () => path === packagePath,
+        }),
+      access: () => Promise.resolve(),
     };
 
     const result = await readProjectMetadata(project, fs, root);
