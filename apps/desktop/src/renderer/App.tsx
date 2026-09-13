@@ -10,27 +10,27 @@ import { initialTabsState, tabsReducer } from './state/tabs-reducer';
 export const App = (): React.JSX.Element => {
   const catalog = useCatalog();
   const [tabs, dispatch] = useReducer(tabsReducer, initialTabsState);
-  const activeTab =
-    tabs.tabs.find((tab) => tab.id === tabs.activeTabId) ?? tabs.tabs[0];
 
   return (
     <main aria-label="Pioneer workspace" className="app-shell">
       <TabStrip dispatch={dispatch} state={tabs} />
-      {activeTab === undefined ? null : (
+      {tabs.tabs.map((tab) => (
         <section
-          aria-labelledby={`tab-${activeTab.id}`}
+          aria-labelledby={`tab-${tab.id}`}
           className="workspace-panel"
-          id={`panel-${activeTab.id}`}
+          hidden={tabs.activeTabId !== tab.id}
+          id={`panel-${tab.id}`}
+          key={tab.id}
           role="tabpanel"
         >
-          {activeTab.kind === 'library' ? (
+          {tab.kind === 'library' ? (
             <ProjectLibrary
               {...catalog}
               onOpenProject={(project) => {
                 dispatch({ type: 'OPEN_PROJECT', project });
               }}
             />
-          ) : activeTab.kind === 'settings' ? (
+          ) : tab.kind === 'settings' ? (
             <SettingsView
               chooseRoot={catalog.chooseRoot}
               busy={catalog.busy}
@@ -40,10 +40,10 @@ export const App = (): React.JSX.Element => {
               warnings={catalog.result?.warnings ?? []}
             />
           ) : (
-            <ProjectWorkspace project={activeTab.project} />
+            <ProjectWorkspace project={tab.project} />
           )}
         </section>
-      )}
+      ))}
     </main>
   );
 };

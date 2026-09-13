@@ -21,12 +21,8 @@ const electronExecutablePath = createRequire(
   path.join(desktopDir, 'package.json'),
 )('electron') as string;
 
-test('moves a project task from Input through Intent Review to READY without mutating fixtures', async ({}, testInfo) => {
-  const beforeHash = await captureFixtureHash(fixtureRoot);
-  const userDataDir = testInfo.outputPath('user-data');
-  await mkdir(userDataDir, { recursive: true });
-
-  const application = await electron.launch({
+const launchApplication = async (userDataDir: string) =>
+  electron.launch({
     executablePath: electronExecutablePath,
     args: [desktopDir],
     env: {
@@ -36,6 +32,13 @@ test('moves a project task from Input through Intent Review to READY without mut
       PIONEER_E2E_USER_DATA: userDataDir,
     },
   });
+
+test('moves a project task from Input through Intent Review to READY without mutating fixtures', async ({}, testInfo) => {
+  const beforeHash = await captureFixtureHash(fixtureRoot);
+  const userDataDir = testInfo.outputPath('user-data');
+  await mkdir(userDataDir, { recursive: true });
+
+  const application = await launchApplication(userDataDir);
 
   try {
     const page = await application.firstWindow();
@@ -74,6 +77,49 @@ test('moves a project task from Input through Intent Review to READY without mut
     await expect(
       page.getByText(/尚未启动 Agent Runtime、工具执行或文件修改/),
     ).toBeVisible();
+  } finally {
+    try {
+      await application.close();
+    } finally {
+      expect(await captureFixtureHashAfterClose(fixtureRoot)).toBe(beforeHash);
+    }
+  }
+});
+
+test('keeps Input drafts isolated and persistent across project tabs', async ({}, testInfo) => {
+  const beforeHash = await captureFixtureHash(fixtureRoot);
+  const userDataDir = testInfo.outputPath('user-data');
+  await mkdir(userDataDir, { recursive: true });
+
+  const application = await launchApplication(userDataDir);
+
+  try {
+    const page = await application.firstWindow();
+
+    await page.getByRole('button', { name: 'Open project alpha-app' }).click();
+    await page.getByRole('tab', { name: 'Library' }).click();
+    await page.getByRole('button', { name: 'Open project beta-notes' }).click();
+
+    await page.getByRole('tab', { name: 'alpha-app' }).click();
+    await page
+      .getByRole('textbox', { name: '任务说明' })
+      .fill('alpha 独立草稿');
+
+    await page.getByRole('tab', { name: 'beta-notes' }).click();
+    await expect(page.getByRole('textbox', { name: '任务说明' })).toHaveValue('');
+    await page
+      .getByRole('textbox', { name: '任务说明' })
+      .fill('beta 独立草稿');
+
+    await page.getByRole('tab', { name: 'alpha-app' }).click();
+    await expect(page.getByRole('textbox', { name: '任务说明' })).toHaveValue(
+      'alpha 独立草稿',
+    );
+
+    await page.getByRole('tab', { name: 'beta-notes' }).click();
+    await expect(page.getByRole('textbox', { name: '任务说明' })).toHaveValue(
+      'beta 独立草稿',
+    );
   } finally {
     try {
       await application.close();
