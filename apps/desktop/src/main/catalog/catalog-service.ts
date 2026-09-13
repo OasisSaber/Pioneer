@@ -44,6 +44,14 @@ function defaultRootValidation(rootPath: string): boolean {
   return rootPath.trim().length > 0 && isAbsolute(rootPath);
 }
 
+/** Raised only when scanner execution or result validation fails unexpectedly. */
+export class CatalogInternalScanError extends Error {
+  public constructor(cause: unknown) {
+    super('Workspace catalog scan failed unexpectedly.', { cause });
+    this.name = 'CatalogInternalScanError';
+  }
+}
+
 /** Serializes catalog mutations so an older scan cannot overwrite a later root selection. */
 export class CatalogService {
   private activeRoot: string | null;
@@ -81,11 +89,7 @@ export class CatalogService {
     this.initializationPromise = this.enqueue(async () => {
       const rememberedRoot = await this.options.settings.loadRoot();
       if (rememberedRoot === null) return this.latestResponse;
-      try {
-        return await this.scanAndRecord(this.requireValidRoot(rememberedRoot));
-      } catch {
-        return this.recordUnavailable(rememberedRoot);
-      }
+      return this.scanAndRecord(this.requireValidRoot(rememberedRoot));
     }).finally(() => {
       this.initializationPromise = null;
     });
@@ -96,9 +100,14 @@ export class CatalogService {
     const normalizedRoot = this.requireValidRoot(rootPath);
     this.initialized = true;
     return this.enqueue(async () => {
+      const candidate = await this.scanRoot(normalizedRoot);
+      if (hasUnavailableRoot(candidate)) return candidate;
+
+      // Persist only after the candidate root has produced a valid catalog.
+      // A failed scan or failed settings write must leave the active workspace
+      // and the last-good catalog untouched.
       await this.options.settings.saveRoot(normalizedRoot);
-      this.activeRoot = normalizedRoot;
-      return this.scanAndRecord(normalizedRoot);
+      return this.recordSuccess(candidate);
     });
   }
 
@@ -149,17 +158,19 @@ export class CatalogService {
     return normalizeRootPath(rootPath);
   }
 
-  private async scanAndRecord(rootPath: string): Promise<CatalogResult> {
+  private async scanRoot(rootPath: string): Promise<CatalogResult> {
     try {
-      const result = CatalogResultSchema.parse(
-        await this.options.scan(rootPath),
-      );
-      return hasUnavailableRoot(result)
-        ? this.recordUnavailable(rootPath, result)
-        : this.recordSuccess(result);
-    } catch {
-      return this.recordUnavailable(rootPath);
+      return CatalogResultSchema.parse(await this.options.scan(rootPath));
+    } catch (error: unknown) {
+      throw new CatalogInternalScanError(error);
     }
+  }
+
+  private async scanAndRecord(rootPath: string): Promise<CatalogResult> {
+    const result = await this.scanRoot(rootPath);
+    return hasUnavailableRoot(result)
+      ? this.recordUnavailable(rootPath, result)
+      : this.recordSuccess(result);
   }
 
   private recordSuccess(result: CatalogResult): CatalogResult {
