@@ -17,7 +17,7 @@
    │  - 统一公开身份、仓库相对链接、权威文档职责与验证层级
    │  - M1.5 质量门禁已通过；测试真相、路径与权威文档职责已规范化
    ▼
-[2026-10 ~ 11] 阶段 2: 桌面只读基础切片 (M2) [IN PROGRESS]
+[2026-10 ~ 11] 阶段 2: 桌面只读基础切片 (M2) [COMPLETE]
    │  - Electron + React + TypeScript skeleton，以及即时子目录的只读扫描
    │  - 受限 IPC/preload、Jellyfin 风格项目海报墙、唯一项目概览 Tabs 与最小 Settings
    │  - Contract Tests 与跨越 Electron main → preload → renderer 的 Real E2E
@@ -45,7 +45,7 @@
 |---|---|---|
 | M1 | **COMPLETE** | M1 设计原型与开题材料已完成本地设计基线收敛（输入/审阅/输出三态收敛，交付物 4 大操作动作对齐，原型测试 100% PASS）；规范身份已建立，物理目录改名仍待 post-M2 operational runbook 与门禁控制。 |
 | M1.5 | **COMPLETE** | 仓库规范化、三层测试真相与 `pnpm check:m15` 门禁已完成。 |
-| M2 | **IN PROGRESS** | 只读桌面基础切片已进入完整门禁与独立审阅阶段；在两者通过前不标记 M2 foundation complete。原生目录选择器的人工证据仍为 Pending，且 M2 不包含工作区变更、重组或快照。 |
+| M2 | **COMPLETE** | Electron + React + TypeScript 只读桌面基础切片已完成；Contract Tests、Real Electron E2E、Windows Native Picker 人工验收、Package Smoke 与最终 Windows Quality Gate 均已通过。M2 不包含文件写入、工作区重组或快照；下一步进入 M3 设计契约同步与 Intent 纵向切片。 |
 
 ---
 
