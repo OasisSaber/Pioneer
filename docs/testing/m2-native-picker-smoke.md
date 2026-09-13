@@ -25,3 +25,31 @@ No manual/native-picker pass is claimed for this record.
 - Immediate-child-only verification, switching roots, and unavailable-root recovery remain **Pending (user deferred)**.
 - User explicitly requested "跳过验收继续开发". This authorizes deferring remaining manual checks to continue development; it does not convert them to passes or establish complete M2 acceptance.
 - Earlier Computer Use attempts were blocked by native-dialog targeting and provide no additional passes. No current build identity or console-clean claim is inferred from the screenshot.
+
+
+## Remote M2 gate evidence — 2026-09-13
+
+A Windows GitHub Actions run on the hardened M2 branch completed the authoritative automated gate successfully:
+
+- Workflow: `M2 Quality Gate`
+- Run ID: `34728719901`
+- Platform: GitHub-hosted Windows Server 2025
+- `pnpm verify:repository`: **PASS**
+- `pnpm check`: **PASS**
+- Real Electron E2E therefore passed for the committed deterministic picker seam, including immediate-child discovery, root switching, unavailable-root recovery, fixture immutability, and tab behavior.
+
+This automated evidence does **not** operate the native Windows directory dialog. The native-picker evidence boundary remains intentionally separate.
+
+### Remaining native-dialog closure
+
+The following three cases still require one human-operated Windows smoke pass against the reviewed build:
+
+| Case | Automated behavior evidence | Native dialog evidence |
+| --- | --- | --- |
+| Selecting a valid root loads only its immediate child directories | PASS via Real Electron E2E | Pending |
+| Switching roots replaces the current catalog | PASS via Real Electron E2E | Pending |
+| Selecting an unavailable disposable root shows a recoverable message | PASS via Real Electron E2E | Pending |
+
+Cancellation already has the 2026-09-09 **PASS (user-reported)** evidence above.
+
+Until these three native-dialog interactions are observed, M2 should remain `IN PROGRESS`; the automated gate alone must not be described as complete native-picker acceptance.

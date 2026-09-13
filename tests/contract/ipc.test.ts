@@ -183,8 +183,8 @@ describe('CatalogService', () => {
     );
     expect(calls).toEqual([
       `validate:${OTHER_ROOT}`,
-      `save:${OTHER_ROOT}`,
       `scan:${OTHER_ROOT}`,
+      `save:${OTHER_ROOT}`,
     ]);
     await expect(service.selectRoot('relative-path')).rejects.toThrow(
       'invalid workspace root',
@@ -222,18 +222,15 @@ describe('CatalogService', () => {
     );
     expect(service.getLastGoodCatalog()).toEqual(stale);
   });
-  it('converts an unexpected scanner failure into a stable unavailable-root result', async () => {
+  it('surfaces an unexpected scanner failure instead of classifying it as an unavailable root', async () => {
     const { service } = createService({
       scan: () => Promise.reject(new Error('EACCES')),
     });
 
-    const result = await service.getCatalog();
-    expect(result).toMatchObject({
-      rootPath: null,
-      projects: [],
-      warnings: [{ code: 'ROOT_UNAVAILABLE', path: ROOT }],
+    await expect(service.getCatalog()).rejects.toMatchObject({
+      name: 'CatalogInternalScanError',
+      message: 'Workspace catalog scan failed unexpectedly.',
     });
-    expect(typeof result.scannedAt).toBe('string');
   });
   it('shares one in-flight rescan promise', async () => {
     const next = deferred<CatalogResult>();

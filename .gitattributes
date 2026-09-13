@@ -1,0 +1,6 @@
+# Keep source and documentation line endings deterministic across Windows and CI.
+* text=auto eol=lf
+
+# Windows command scripts may retain CRLF if added later.
+*.bat text eol=crlf
+*.cmd text eol=crlf
