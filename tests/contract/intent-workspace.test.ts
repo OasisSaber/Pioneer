@@ -7,6 +7,15 @@ import {
 
 const projectId = 'project-alpha';
 
+const readyState = () => {
+  let state = intentWorkspaceReducer(initialIntentWorkspaceState(), {
+    type: 'SET_INSTRUCTION',
+    instruction: '只审阅计划，不执行。',
+  });
+  state = intentWorkspaceReducer(state, { type: 'SUBMIT', projectId });
+  return intentWorkspaceReducer(state, { type: 'CONFIRM' });
+};
+
 describe('M3 intent workspace reducer', () => {
   it('rejects blank instructions locally', () => {
     const next = intentWorkspaceReducer(initialIntentWorkspaceState(), {
@@ -57,16 +66,40 @@ describe('M3 intent workspace reducer', () => {
     expect(state.intent?.instruction).toBe('第二版任务');
   });
 
-  it('ends the first vertical slice at ready without runtime state', () => {
-    let state = intentWorkspaceReducer(initialIntentWorkspaceState(), {
-      type: 'SET_INSTRUCTION',
-      instruction: '只审阅计划，不执行。',
-    });
-    state = intentWorkspaceReducer(state, { type: 'SUBMIT', projectId });
-    state = intentWorkspaceReducer(state, { type: 'CONFIRM' });
+  it('reaches ready without creating a runtime session', () => {
+    const state = readyState();
 
     expect(state.phase).toBe('ready');
     expect(state.intent?.status).toBe('ready');
+    expect(state.session).toBeNull();
+  });
+
+  it('bootstraps a disabled runtime session only after approval', () => {
+    const state = intentWorkspaceReducer(readyState(), {
+      type: 'BOOTSTRAP_SESSION',
+    });
+
+    expect(state.phase).toBe('session');
+    expect(state.session?.status).toBe('initialized');
+    expect(state.session?.approvedIntent.status).toBe('ready');
+    expect(state.session?.capabilities).toEqual({
+      modelAccess: false,
+      toolExecution: false,
+      fileMutation: false,
+    });
+  });
+
+  it('rejects runtime bootstrap before the intent is ready', () => {
+    let state = intentWorkspaceReducer(initialIntentWorkspaceState(), {
+      type: 'SET_INSTRUCTION',
+      instruction: '尚未批准的任务',
+    });
+    state = intentWorkspaceReducer(state, { type: 'SUBMIT', projectId });
+    state = intentWorkspaceReducer(state, { type: 'BOOTSTRAP_SESSION' });
+
+    expect(state.phase).toBe('review');
+    expect(state.session).toBeNull();
+    expect(state.error).toBe('INTENT_NOT_READY');
   });
 
   it('supports cancellation from review', () => {
@@ -79,5 +112,6 @@ describe('M3 intent workspace reducer', () => {
 
     expect(state.phase).toBe('cancelled');
     expect(state.intent?.status).toBe('cancelled');
+    expect(state.session).toBeNull();
   });
 });

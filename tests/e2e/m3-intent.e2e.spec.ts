@@ -33,7 +33,7 @@ const launchApplication = async (userDataDir: string) =>
     },
   });
 
-test('moves a project task from Input through Intent Review to READY without mutating fixtures', async ({}, testInfo) => {
+test('moves an approved READY intent into an initialized runtime session without mutating fixtures', async ({}, testInfo) => {
   const beforeHash = await captureFixtureHash(fixtureRoot);
   const userDataDir = testInfo.outputPath('user-data');
   await mkdir(userDataDir, { recursive: true });
@@ -75,8 +75,17 @@ test('moves a project task from Input through Intent Review to READY without mut
     await page.getByRole('button', { name: '批准计划' }).click();
     await expect(page.getByText('READY', { exact: true })).toBeVisible();
     await expect(
-      page.getByText(/尚未启动 Agent Runtime、工具执行或文件修改/),
+      page.getByText(/初始化只锁定已批准意图，不会启动模型/),
     ).toBeVisible();
+
+    await page.getByRole('button', { name: '初始化运行会话' }).click();
+    await expect(
+      page.getByRole('heading', { name: '运行会话已初始化' }),
+    ).toBeVisible();
+    await expect(page.getByText('模型接入：关闭', { exact: true })).toBeVisible();
+    await expect(page.getByText('工具执行：关闭', { exact: true })).toBeVisible();
+    await expect(page.getByText('文件写入：关闭', { exact: true })).toBeVisible();
+    await expect(page.getByText(/执行仍未开始/)).toBeVisible();
   } finally {
     try {
       await application.close();

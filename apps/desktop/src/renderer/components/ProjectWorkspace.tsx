@@ -17,6 +17,7 @@ const errorCopy: Record<string, string> = {
   INVALID_TRANSITION: '当前状态不能执行这个操作。',
   REVISION_OVERFLOW: '任务版本已达到上限，请重新开始。',
   STALE_REVISION: '任务版本已变化，请重新审阅。',
+  INTENT_NOT_READY: '只有已批准的 READY 意图才能初始化运行会话。',
 };
 
 function ProjectContext({
@@ -48,8 +49,8 @@ function ProjectContext({
       </dl>
       <div className="workspace-boundary">
         <strong>本轮边界</strong>
-        <span>只生成与审阅 TaskIntent</span>
-        <span>不执行代码 · 不写文件 · 不启动 Agent Runtime</span>
+        <span>生成、审阅 TaskIntent，并可初始化受控 Runtime Session</span>
+        <span>不连接模型 · 不执行工具 · 不写文件</span>
       </div>
     </aside>
   );
@@ -89,7 +90,7 @@ function SceneBar(): React.JSX.Element {
       >
         自定
       </button>
-      <span className="scene-bar__hint">M3 · Intent-only slice</span>
+      <span className="scene-bar__hint">M3 · Runtime bootstrap</span>
     </nav>
   );
 }
@@ -126,7 +127,7 @@ export function ProjectWorkspace({
           </div>
         </div>
         <div className="project-workspace__header-actions">
-          <span className="status-pill">M3 · INTENT PREVIEW</span>
+          <span className="status-pill">M3 · RUNTIME BOOTSTRAP</span>
           <button
             className="button"
             onClick={() => {
@@ -319,17 +320,83 @@ export function ProjectWorkspace({
           <p className="eyebrow">INPUT · APPROVAL COMPLETE</p>
           <h2>意图已批准</h2>
           <p>
-            TaskIntent revision {state.intent.revision} 已进入 READY。M3
-            当前纵向切片到此结束；尚未启动 Agent Runtime、工具执行或文件修改。
+            TaskIntent revision {state.intent.revision} 已进入 READY。现在可以
+            初始化受控 Runtime Session；初始化只锁定已批准意图，不会启动模型、
+            工具执行或文件修改。
           </p>
           <div className="intent-terminal-state__summary">
             <strong>{state.intent.instruction}</strong>
             <span>
-              {state.intent.steps.length} 个计划步骤已锁定供后续 Runtime 使用。
+              {state.intent.steps.length} 个计划步骤将原样锁定到 Runtime Session。
+            </span>
+          </div>
+          {error === null ? null : (
+            <p className="form-error" role="alert">
+              {error}
+            </p>
+          )}
+          <div className="intent-terminal-state__actions">
+            <button
+              className="button button--primary"
+              onClick={() => {
+                dispatch({ type: 'BOOTSTRAP_SESSION' });
+              }}
+              type="button"
+            >
+              初始化运行会话
+            </button>
+            <button
+              className="button"
+              onClick={() => {
+                dispatch({ type: 'RESET' });
+              }}
+              type="button"
+            >
+              新建任务
+            </button>
+          </div>
+        </section>
+      ) : null}
+
+      {state.phase === 'session' && state.session !== null ? (
+        <section
+          className="intent-terminal-state"
+          aria-label="Runtime session initialized"
+        >
+          <span className="ready-badge">SESSION INITIALIZED</span>
+          <p className="eyebrow">INPUT · RUNTIME SESSION BOOTSTRAP</p>
+          <h2>运行会话已初始化</h2>
+          <p>
+            Runtime Session 已锁定批准后的 TaskIntent revision{' '}
+            {state.session.approvedIntent.revision}。执行仍未开始。
+          </p>
+          <div className="runtime-session-grid">
+            <div>
+              <span>Session ID</span>
+              <strong className="path-text">{state.session.id}</strong>
+            </div>
+            <div>
+              <span>批准意图</span>
+              <strong>REV {state.session.approvedIntent.revision}</strong>
+            </div>
+            <div>
+              <span>运行状态</span>
+              <strong>INITIALIZED</strong>
+            </div>
+          </div>
+          <div className="runtime-capabilities" aria-label="Runtime capabilities">
+            <strong>模型接入：关闭</strong>
+            <strong>工具执行：关闭</strong>
+            <strong>文件写入：关闭</strong>
+          </div>
+          <div className="intent-terminal-state__summary">
+            <strong>{state.session.approvedIntent.instruction}</strong>
+            <span>
+              会话只持有已批准意图的独立快照，不会重新解释原始输入。
             </span>
           </div>
           <button
-            className="button button--primary"
+            className="button"
             onClick={() => {
               dispatch({ type: 'RESET' });
             }}
