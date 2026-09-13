@@ -1,0 +1,40 @@
+name: Format Diagnostic
+
+on:
+  push:
+    branches:
+      - 'fix/m2-final-gate'
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format changed TypeScript files
+        run: >-
+          pnpm exec prettier --write
+          apps/desktop/src/main/catalog/catalog-service.ts
+          apps/desktop/src/main/catalog/metadata.ts
+          tests/contract/catalog-service.test.ts
+          tests/contract/metadata.test.ts
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: prettier-output
+          path: |
+            apps/desktop/src/main/catalog/catalog-service.ts
+            apps/desktop/src/main/catalog/metadata.ts
+            tests/contract/catalog-service.test.ts
+            tests/contract/metadata.test.ts
