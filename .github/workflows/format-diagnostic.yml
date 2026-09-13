@@ -1,4 +1,4 @@
-name: Format Diagnostic
+name: Gate Diagnostic
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: read
 
 jobs:
-  format:
+  diagnose:
     runs-on: windows-latest
     timeout-minutes: 10
     steps:
@@ -22,15 +22,15 @@ jobs:
           node-version: '24'
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Capture format-check output
+      - name: Capture lint output
         shell: pwsh
         run: |
-          pnpm format:check *> format-output.txt
+          pnpm lint *> gate-output.txt
           $code = $LASTEXITCODE
-          "exit_code=$code" | Add-Content format-output.txt
+          "exit_code=$code" | Add-Content gate-output.txt
           exit 0
-      - name: Upload formatter output
+      - name: Upload diagnostic output
         uses: actions/upload-artifact@v4
         with:
-          name: prettier-check-output
-          path: format-output.txt
+          name: gate-diagnostic-output
+          path: gate-output.txt
