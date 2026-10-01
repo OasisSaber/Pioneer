@@ -1,154 +1,109 @@
 # Pioneer
 
-Pioneer is a modular AI Agent interaction-system project moving from an M1 HTML design prototype into an Electron + React + TypeScript product.
+**模块化 AI Agent 交互系统 · 可组合的前端工作台 × 轻量 Harness 工程**
 
-- Current desktop implementation: [`apps/desktop`](apps/desktop/) contains the completed M2 read-only Electron foundation plus the first M3 `Input → Intent Review → READY` vertical slice.
-- Historical visual references: frozen M1 HTML design references under [`demos/`](demos/README.md).
-- Current engineering milestone: M3 is **IN PROGRESS**. The design-contract sync and first `Input → Intent Review → READY` slice are on `main`; next is `READY → Runtime Session bootstrap`.
-- Canonical repository: `OasisSaber/Pioneer`.
-- Canonical local checkout: `D:\Projects\Pioneer`.
+> 一切皆 UI：让 Agent 的上下文、能力、授权与运行状态，成为人能看见、理解和操作的对象。
 
-## Install and run
+Pioneer 是数字媒体技术毕业设计《模块化 AI Agent 交互系统的设计与实现》的工程与设计实践。它不止是本地项目管理器，也不以“给聊天框换皮”为目标：一条主线探索 **Agent 的前端交互范式**，另一条主线建设 **面向高能力模型的轻量、可复用 Harness**。
 
-Use Node.js 24 or newer and the package-manager version pinned in `package.json`:
+[体验交互原型](https://nix-medley-14707825.figma.site/) · [Figma 设计工作区](https://www.figma.com/design/EQis9ep9ZQsEenrUVXwlFU/Pioneer?node-id=824-1279) · [工程源码 · apps/desktop](apps/desktop/) · [课题定位](选题收敛说明.md)
+
+**开发中。** 公开原型、已合并代码与本地开发候选是不同交付层；原型中的模型、执行器和文件操作仍为模拟，不代表真实 Agent 已接通。
+
+## 两条主线，同一套产品
+
+### 01 · 前端与交互：从聊天框走向工作台
+
+- **媒体库式入口。** 借鉴 Jellyfin 的海报墙，让工作区和项目可以快速识别、浏览与进入；首页是任务入口，不是产品的全部。
+- **会话优先。** 顶层 Tabs 组织不同会话；欢迎、建议、历史消息与输入栏共同构成一个完整的基础对话面板。
+- **Premiere Pro 式面板组合。** 借鉴 Adobe Premiere Pro 的停靠逻辑，而非 Pull Request 或视频剪辑功能。上下文、改动、产物、执行记录等模块按需打开，支持分割、移动、标签分组、关闭与恢复；不锁死左右位置，不把任务阶段重新做成专注 / 审阅 / 交付分页。
+- **不抢走用户的工作。** 新结果更新入口和状态，用户点击才打开相应内容；任务推进不应擅自切页、重排布局或滚走正在阅读的位置。
+
+这里的模块化分为三层：**模块提供内容或能力，面板承载可见实例，布局决定组合关系。** 改变界面布局，不等于改变模型上下文，更不等于授权执行。
+
+以上是近期设计方向；完整面板工作台仍需从原型与本地候选逐步集成到公开代码，并独立验收。
+
+### 02 · Harness 工程：少一点情景封装，多一点可复用能力
+
+Harness 是组织模型、上下文、工具与运行生命周期的工程层，不是另一套不断膨胀的角色提示词。
+
+| 方向                   | 设计目标                                                                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| **轻量上下文**         | 按任务需要组装信息，减少重复规则与无关历史，不把界面中所有可见内容都塞给模型。                                     |
+| **能力模块化**         | 将工具、Skill 与运行能力拆成可组合、可替换的模块，避免每个场景重新造一套 Agent。                                   |
+| **统一接入**           | 以稳定合同连接 GUI、模型与 Runtime；目标复用 Pi Agent Harness 的模型适配、Agent 核心和会话能力，而非重造所有底层。 |
+| **自主性与可控性并存** | 为模型保留判断空间；把授权、停止、未知状态和真实结果来源落实到明确边界，不靠长提示词假装安全。                     |
+| **可测量的价值**       | 后续在相同模型与任务下比较上下文用量、完成率与耗时；当前不宣称已有性能收益或评测结论。                             |
+
+两条主线不是简单的“前端 + 后端”分工：**界面决定 Harness 需要暴露什么，Harness 的合同决定界面能如实呈现什么。** 用户确认目标、批准某版意图、初始化会话、允许工具执行，是不同事件，不能合并成一个“开始”按钮。
+
+Pi 接入、真实模型调用与工具执行仍是后续目标。现有意图审阅和 Runtime Session 初始化，是这条主线的工程基础，不等于 Agent 已开始运行。
+
+## 近期的设计精神
+
+**安静，但不是空洞。** Hazel × Claude 的探索融合阅读秩序与克制陪伴：银灰、藏蓝、薄荷，清晰的中文字体层级，任务表面低噪声，细节按需披露。品牌不是把插画铺满工作区。
+
+**自由组合，而不是强制流程。** 保留基础对话的完整性，再添加需要的能力；不让僵化的阶段分页、默认三栏或固定像素限制替用户决定工作方式。
+
+**复用素材，而不是增加视觉预算。** 通过同槽替换、按会话稳定分配主题和闲置资产复用增加多样性。桌宠与插画不争夺空间，不遮挡正文、控件或拖放落点。
+
+**借鉴交互，不覆盖身份。** Windows 应用采用 macOS 式红黄绿窗口控制与相应操作逻辑，作为窗口层补充；不会因此把应用改成整套 Apple 风格。计划适配 `dsh-manqu-pet`，原型桌宠不等于真实插件已集成。
+
+**设计要能落地，证据不能串层。** Figma Design 承载规范、组件、素材与归档；Figma Make 用于可操作原型和交互迭代；React / Electron 是独立工程实现，不与 Make 自动同步，也不以截图代替运行时验证。历史探索已集中归档，不再与当前设计并排充当实现清单。
+
+## 当前进度与边界
+
+以下为 **2026-10-01** 核对结果；阶段判定仍以对应修订的 [ROADMAP](themasterplan/ROADMAP.md) 和工程证据为准。
+
+| 交付层                                 | 已有内容                                                                                                                                 | 不能据此宣称                                                            |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **GitHub main · 桌面基础**             | Electron 主进程 / preload / React 渲染链、只读项目扫描、媒体库海报墙、项目 Tabs 与设置。                                                 | 任意文件访问、项目整理写入或完整 Agent 工作流已实现。                   |
+| **GitHub main · 意图与会话初始化**     | 任务编写、本地确定性意图预览、修改 / 重提 / 取消 / READY；批准的意图可初始化为 Runtime Session 快照，保留 revision，三项运行能力均关闭。 | 预览由模型生成，或 `initialized` 已经代表模型调用、工具执行、文件写入。 |
+| **本地工作台候选 · 尚未整体合入 main** | 会话草稿与布局本机持久化、停靠面板、活动查询、Hazel 视觉与窗口层等增量工作。                                                             | 所有本地成果已经存在于公开 main，或已完成全部 Windows 人工验收。        |
+| **Figma / Make · 设计与原型**          | 规范和素材整理、可组合面板、报表预览与验收回看、布局恢复等交互探索。                                                                     | 原型中的结果、日志、授权和桌宠具有真实执行或插件能力。                  |
+| **Harness · 待接通的运行链**           | 意图 / 初始化合同已进入代码；轻量上下文、能力模块化、Pi 统一接入与评测方向已明确。                                                       | 真实 Provider、Pi runner、工具事件流、工作区写入和对比实验已经完成。    |
+
+公开 main 目前仍按 M3 的“输入 / 审阅 / 输出 / 自定”场景合同运行，Intent Review 位于输入阶段。近期取消“专注 / 审阅 / 交付”三布局入口是新工作台的设计方向，尚未替换 main 的导航，也不取消意图审阅能力。
+
+Make 原型仍在收口部分面板入口、桌宠鼠标互动与窄窗适配。应用开发当前暂停，继续推进设计与交接；本次 README 更新不恢复开发、不修改旧工程合同或里程碑。
+
+已合并的初始化边界见 [Runtime Session Contract](https://github.com/OasisSaber/Pioneer/blob/main/docs/design/M3-RUNTIME-SESSION-CONTRACT.md)：**批准意图是快照来源，初始化不是执行授权。**
+
+## 技术与验证
+
+- **桌面与前端：** Electron、React、TypeScript。
+- **合同与工程：** Zod，共享序列化数据合同，受限 IPC / preload；Electron Forge + Webpack 构建。
+- **设计协作：** Figma Design + Figma Make，设计与真实工程分别验证。
+- **目标运行底座：** Pi Agent Harness，尚未接入真实运行链。
+- **测试：** Vitest Contract Tests、冻结 M1 Prototype Tests、Playwright Real Electron E2E。
+
+本地启动需要 Node.js 24+，pnpm 版本以 `package.json` 为准：
 
 ```powershell
 pnpm install
-pnpm --filter @pioneer/desktop start
+pnpm dev
 ```
 
-The renderer in `apps/desktop` now follows the approved Figma workspace contract for the implemented M3 Input / Intent Review slice. Figma `Pioneer · DEMO Lab` remains the visual interaction authority; later scenes are not claimed implemented until their own engineering slices land.
-
-The deterministic Real E2E seam injects a committed fixture root. The native directory picker remains outside that seam; its M2 human acceptance evidence is recorded separately and complete.
-
-## Verification levels and commands
-
-The primary engineering gate is `pnpm check`:
+这会启动当前签出的工程版本，不是在线 Make 原型。已有本地未合并候选时，其行为也不等同于 GitHub main。
 
 ```powershell
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm test:contract
-pnpm test:prototype
-pnpm test:e2e
-pnpm package:smoke
-pnpm check
+pnpm test:contract   # 共享合同与状态边界
+pnpm test:prototype  # 冻结 M1 原型与探针，不是 Electron 证据
+pnpm test:e2e        # Playwright 启动真实 Electron
+pnpm check          # 完整工程质量门
 ```
 
-- **Contract Tests** are deterministic TypeScript units for shared schemas, paths, scanner, IPC, settings, security, runtime configuration, and the tab reducer: `pnpm test:contract`.
-- **Prototype Tests** are the executable frozen M1 simulator plus static/adversarial probes: `pnpm test:prototype`.
-- **Real E2E** uses Playwright to launch Electron and cross main → preload → renderer against committed filesystem fixtures while checking fixture immutability: `pnpm test:e2e`.
+测试分类见 [TEST_INFRA.md](TEST_INFRA.md)。真实 E2E 必须跨越 main → preload → renderer；原生目录选择器与 Windows 窗口行为仍有单独的人工验证范围。历史日志、Figma 静态检查和浏览器原型点击，不能互相替代。
 
-Renderer mocks cannot establish a Real E2E claim. M2 is complete: Contract Tests, Real Electron E2E, Windows native-picker human acceptance, package smoke, and the final Windows quality gate have passed. M2 remains strictly read-only and does not include file writes, workspace reorganization, or snapshots. See [`TEST_INFRA.md`](TEST_INFRA.md) for the authoritative taxonomy and [`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) for milestone status.
+## 深入阅读
 
----
+- [课题定位与双主线](选题收敛说明.md)
+- [工程架构与安全边界](PROJECT.md)
+- [里程碑与工程路线图](themasterplan/ROADMAP.md)
+- [Figma · Hazel × Claude 规范](https://www.figma.com/design/EQis9ep9ZQsEenrUVXwlFU/Pioneer?node-id=824-1276)
+- [Figma Make 源项目](https://www.figma.com/make/tcAZjzVznDTlTGcMqVGXqj/Desktop-App-Prototype-Design)
+- [冻结 M1 参考原型](demos/README.md)
 
-## 项目背景与设计工作区
+## License
 
-> **课题全称**：模块化 AI Agent 交互系统的设计与实现
-> *(Design and Implementation of a Modular AI Agent Interaction System)*
-> **项目代号**：**Pioneer**（Pi 极简底盘 + oneer 开拓者）
-> **专业归属**：2027 届数字媒体技术专业 · 毕业设计
-
----
-
-## 一、核心设计哲学与双主线架构
-
-> **系统本体论三联：**
-> * UNIX / Linux 的理念是 **「一切皆文件」** —— 统一硬件与底层数据的抽象；
-> * Harness 框架的理念是 **「一切皆插件」** —— 统一模型、工具与运行时的抽象；
-> * **Pioneer 的理念是「一切皆 UI」(Everything is a UI)** —— 统一 Agent 复杂黑盒与人类直觉认知的桥梁。不把配置、工具、状态和组件藏进代码或文字，全部实体化为可交互、可编排的界面组件。
-
-```
-+========================================================================================+
-|                     [主线一] 模块化 AI Agent 交互系统                                    |
-|----------------------------------------------------------------------------------------|
-|  [顶层框架] Tabs 多标签体系（取代常驻左侧栏，释放全宽视界）                              |
-|  [ 📚 媒体库 ]  |  [ 📦 项目工作区 ]  |  [ ⚙️ 系统设置 ]  |  [ + 新标签页 ]              |
-|----------------------------------------------------------------------------------------|
-|  1. 媒体库 · 海报墙                                                                     |
-|     - 本地项目元数据读取：Git、README、技术栈信息                                       |
-|     - 海报卡片：名称 / 技术栈 / 活跃状态 / Runbook，点击直达对应工作区                  |
-|     - 整理操作先预览：路径级 Diff → 确认执行 → 保留回滚快照（批准前不写入）             |
-|----------------------------------------------------------------------------------------|
-|  2. 项目工作区 · 模块化                                                                 |
-|     - 场景切换：[ 输入 ] [ 审阅 ] [ 输出 ] [ 自定 ]                                    |
-|     - 输入场景内完成任务编写与 Intent Review；审阅场景负责 Agent Files / Diff            |
-|     - 输出场景负责 Artifacts；自定场景负责模块化组合；每阶段只显示当前需要的信息          |
-+========================================================================================+
-                          │ 显式状态层（UI 状态 ⟂ 模型上下文） + 事件流
-+========================================================================================+
-|                     [主线二] Harness 工程的设计与实现                                    |
-|----------------------------------------------------------------------------------------|
-|  - 轻量上下文：仅提供当前任务所需信息，减少长提示词与重复规则干扰                       |
-|  - 能力模块化：工具 / Skill / 运行能力独立组合，同一能力可跨项目复用                    |
-|  - 统一接入：通过稳定边界连接模型与 Agent Runtime，降低换模型 / 加工具成本               |
-|  - 对比实验：相同模型与任务下，测量不同 Harness 的上下文用量 / 完成率 / 耗时             |
-|  - 复用 Pi Agent Harness：pi-ai（模型适配） / agent-core（状态·工具·事件流） /           |
-|    coding-agent（Session · Compaction · SDK / RPC）                                     |
-+========================================================================================+
-```
-
-> **两条主线的关系**：界面形态决定 Harness 需要暴露什么，Harness 的边界决定界面能呈现什么。不是「前端 + 后端」的简单分层。
-
----
-
-## 二、核心交付导航 (Master Index)
-
-### 1. 选题与定位（单一事实源）
-- [`选题收敛说明.md`](选题收敛说明.md) — 题目删改记录、双主线定位、硬约束、时间线与待确认事项。
-- [`产品定义与美学纲领.md`](产品定义与美学纲领.md) — 一句话定义、双主线产品形态、克制原则与历史探索记录。
-- [`开题PPT逐页文案.md`](开题PPT逐页文案.md) — **10 页开题讲稿**与答辩速答清单（权威源为 Figma `Pioneer-PPT`）。
-
-### 2. 开题支撑材料
-- [`开题材料·需求与验收.md`](开题材料·需求与验收.md) — 需求分析、用户研究、内容制作与成果验收标准。
-- [`功能全景与开题支撑清单.md`](功能全景与开题支撑清单.md) — 按双主线组织的功能全景、指南八环节自查与四合一对照。
-- [`竞品基线与差异化核查.md`](竞品基线与差异化核查.md) — 交互范式与 Harness 形态的竞品核查、基线清单与差异化结论。
-
-### 3. 工程总纲与研发工作流 (The Masterplan)
-- [`themasterplan/THEMASTERPLAN.md`](themasterplan/THEMASTERPLAN.md) — 愿景、架构蓝图、数媒「四合一」交付矩阵与工程总纲。
-- [`themasterplan/ROADMAP.md`](themasterplan/ROADMAP.md) — 阶段里程碑与渐进式开发路线图。
-
-### 4. 设计规范与 Figma 协作体系 (Design System & Figma)
-- [`docs/design/WONDERWALL-DESIGN-SPEC.md`](docs/design/WONDERWALL-DESIGN-SPEC.md) — 完整设计系统规范（极简骨架、海报墙、模块化面板、Design Tokens）。
-- [`docs/design/COMPETITOR-SYNTHESIS.md`](docs/design/COMPETITOR-SYNTHESIS.md) — 竞品界面解构与差异化超越。
-- [`docs/design/FIGMA-COLLABORATION-PLAN.md`](docs/design/FIGMA-COLLABORATION-PLAN.md) — Figma 变量、图层结构与组件协作方案。
-
-### 5. 三页设计范例 (Design Spec Exemplars)
-- [`design-specs/01-design-tokens-and-typography.html`](design-specs/01-design-tokens-and-typography.html) — 色彩 Token、双轨字体层级与网格规范。
-- [`design-specs/02-component-and-surfaces.html`](design-specs/02-component-and-surfaces.html) — 意图核对卡、项目海报卡、整理 Diff 预览等原子组件范例。
-- [`design-specs/03-restraint-and-pathology.html`](design-specs/03-restraint-and-pathology.html) — 克制原则对照实验。
-
-### 6. 核心交互页面 Demo (Interactive Page Demos)
-- [`demos/README.md`](demos/README.md) — **M1 Demo policy**: frozen reference implementations, allowed-change boundary, and the `apps/desktop` product handoff boundary.
-- [`demos/01-bookshelf-workspace.html`](demos/01-bookshelf-workspace.html) — **Demo 01**: 项目海报墙与工作区管理（元数据读取 + 整理预览）。
-- [`demos/02-session-intent-card.html`](demos/02-session-intent-card.html) — **Demo 02**: 模块化工作区执行会话（场景切换 + 意图核对 + 过程流）。
-- [`demos/03-wrapup-and-gallery.html`](demos/03-wrapup-and-gallery.html) — **Demo 03**: 任务结果检查（成果画廊 + 回滚 + Runbook 提炼）。
-
-These HTML files are M1 presentation references, not the evolving application. New product behavior belongs in the `apps/desktop` Electron implementation.
-
-### 7. 开题汇报
-> 开题汇报的**权威源为 Figma `Pioneer-PPT`**（10 页），讲稿见 [`开题PPT逐页文案.md`](开题PPT逐页文案.md)。仓库内早期 8 页 HTML 版演示稿及其验证脚本已于 2026-09-11 移除。
-
----
-
-## 三、数媒四大支柱落实（四合一支撑）
-
-1. **设计 (Design)**：
-   * **媒体库海报墙**：把本地项目渲染为可一眼识别的资产卡片。
-   * **模块化工作区**：Tabs 与可停靠面板，工作区随任务阶段切换。
-   * **克制原则**：每个阶段只显示当前需要的信息，拒绝无意义的信息陈列。
-2. **技术 (Technology)**：
-   * 显式状态层与事件流；Tabs / Dockview 面板系统。
-   * Harness 上下文组装、能力模块化与统一接入层。
-3. **内容 (Content)**：
-   * 项目元数据读取规范、Runbook 模板、场景内容包、交互短句库。
-4. **智能 (Intelligence)**：
-   * 意图核对机制（Human-in-the-loop）、轻量上下文策略、能力模块化组合。
-
----
-
-## 四、开源许可证
-
-本项目采用 [MIT License](LICENSE) 开源。
+代码采用 [MIT License](LICENSE)。外部设计参考、字体与角色素材遵循各自来源和使用条件，不因代码许可证自动获得额外授权。
